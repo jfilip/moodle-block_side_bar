@@ -1,4 +1,4 @@
-<?php   // $Id $
+<?php // $Id$
 
 /**
  * Open Knowledge Technologies
@@ -13,15 +13,15 @@
 class block_side_bar extends block_list {
 
     function init() {
-		global $CFG;
+        global $CFG;
 
         $this->title = get_string('sidebar', 'block_side_bar');
         $this->version = 2006022800;
 
-	/// Make sure the global section start value is set.
-		if (!isset($CFG->block_side_bar_section_start)) {
-			set_config('block_side_bar_section_start', 1000);
-		}
+    /// Make sure the global section start value is set.
+        if (!isset($CFG->block_side_bar_section_start)) {
+            set_config('block_side_bar_section_start', 1000);
+        }
     }
 
     function get_content() {
@@ -40,55 +40,55 @@ class block_side_bar extends block_list {
             return $this->content;
         }
 
-		if (!isset($this->config->title)) {
-			$this->config->title = '';
-		}
-
-		if (!empty($this->config->title)) {
-			$this->title = $this->config->title;
-		}
-
+        if (!isset($this->config->title)) {
+            $this->config->title = '';
+        }
+        
+        if (!empty($this->config->title)) {
+            $this->title = $this->config->title;
+        }
+        
         $course = get_record('course', 'id', $this->instance->pageid);
-
+        
         $isteacher = isteacher($this->instance->pageid);
         $isediting = isediting($this->instance->pageid);
         $ismoving  = ismoving($this->instance->pageid);
+        
+        $section_start = $CFG->block_side_bar_section_start;
 
-		$section_start = $CFG->block_side_bar_section_start;
-
-	/// Create a new section for this block (if necessary).
-		if (!isset($this->config->section) or empty($this->config->section)) {
-			$sql = "SELECT MAX(section) FROM `" . $CFG->prefix .
-				   "course_sections` WHERE course='" . $this->instance->pageid . "'";
-			$rec = get_record_sql($sql);
-			
-			$index = 'MAX(section)';
-			$sectionnum = $rec->$index;
-
-			if ($sectionnum < $section_start) {
-				$sectionnum = $section_start;
-			} else {
-				$sectionnum++;
-			}
-
-			$section = new stdClass;
-			$section->course   = $this->instance->pageid;
-			$section->section  = $sectionnum;
-			$section->summary  = '';
-			$section->sequence = '';
-			$section->visible  = 1;
-			$section->id = insert_record('course_sections', $section);
-			
-			if (empty($section->id)) {
-				error('Could not add new section to course.');
-			}
-
-			$this->config->section = $section->section;
-			parent::instance_config_commit();
-		} else {
-			$section = get_record('course_sections', 'course', $this->instance->pageid,
-								  'section', $this->config->section);
-		}
+    /// Create a new section for this block (if necessary).
+        if (!isset($this->config->section) or empty($this->config->section)) {
+            $sql = "SELECT MAX(section) FROM `" . $CFG->prefix .
+                   "course_sections` WHERE course='" . $this->instance->pageid . "'";
+            $rec = get_record_sql($sql);
+            
+            $index = 'MAX(section)';
+            $sectionnum = $rec->$index;
+            
+            if ($sectionnum < $section_start) {
+                $sectionnum = $section_start;
+            } else {
+                $sectionnum++;
+            }
+            
+            $section = new stdClass;
+            $section->course   = $this->instance->pageid;
+            $section->section  = $sectionnum;
+            $section->summary  = '';
+            $section->sequence = '';
+            $section->visible  = 1;
+            $section->id = insert_record('course_sections', $section);
+            
+            if (empty($section->id)) {
+                error('Could not add new section to course.');
+            }
+            
+            $this->config->section = $section->section;
+            parent::instance_config_commit();
+        } else {
+            $section = get_record('course_sections', 'course', $this->instance->pageid,
+                                  'section', $this->config->section);
+        }
 
         if (!empty($section) || $isediting) {
             get_all_mods($this->instance->pageid, $mods, $modnames, $modnamesplural, $modnamesused);
