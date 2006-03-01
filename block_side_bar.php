@@ -198,7 +198,7 @@ class block_side_bar extends block_list {
 	}
 
     function applicable_formats() {
-        return array('course-view' => true);
+        return array('course' => true);
     }
 
 }
