@@ -182,20 +182,20 @@ class block_side_bar extends block_list {
         return $this->content;
     }
 
-	function has_config() {
-		return true;
-	}
+    function has_config() {
+        return true;
+    }
 
-	function config_save($data) {
-		if (!empty($data->block_side_bar_section_start)) {
-			set_config('block_side_bar_section_start',
-					   intval($data->block_side_bar_section_start));
-		}
-	}
+    function config_save($data) {
+        if (!empty($data->block_side_bar_section_start)) {
+            set_config('block_side_bar_section_start',
+                       intval($data->block_side_bar_section_start));
+        }
+    }
 
-	function instance_allow_multiple() {
-		return true;
-	}
+    function instance_allow_multiple() {
+        return true;
+    }
 
     function applicable_formats() {
         return array('course' => true);
