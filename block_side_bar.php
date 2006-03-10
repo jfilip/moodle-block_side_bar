@@ -1,13 +1,13 @@
 <?php // $Id$
 
 /**
- * Open Knowledge Technologies
- * Justin Filip <jfilip@oktech.ca>
- * 
  * Allows for arbitrarily adding resources or activities to extra (non-standard
  * course sections with instance configuration for the block title.
  * 
  * (Code modified from site_main_menu block).
+ *
+ * @author Open Knowledge Technologies
+ * @author Justin Filip <jfilip@oktech.ca>
  */
 
 class block_side_bar extends block_list {
@@ -58,13 +58,12 @@ class block_side_bar extends block_list {
 
     /// Create a new section for this block (if necessary).
         if (!isset($this->config->section) or empty($this->config->section)) {
-            $sql = "SELECT MAX(section) FROM `" . $CFG->prefix .
+            $sql = "SELECT MAX(section) as sectionid FROM `" . $CFG->prefix .
                    "course_sections` WHERE course='" . $this->instance->pageid . "'";
             $rec = get_record_sql($sql);
             
-            $index = 'MAX(section)';
-            $sectionnum = $rec->$index;
-            
+            $sectionnum = $rec->sectionid;
+
             if ($sectionnum < $section_start) {
                 $sectionnum = $section_start;
             } else {
@@ -180,6 +179,26 @@ class block_side_bar extends block_list {
         }
 
         return $this->content;
+    }
+
+    function instance_delete() {
+        if (empty($this->instance)) {
+            return true;
+        }
+        
+        // Cleanup the section created by this block and any course modules.
+        if (isset($this->config->section)) {
+            $section = get_record('course_sections', 'section', $this->config->section,
+                                  'course', $this->instance->pageid);
+
+            if (!empty($section)) {
+                delete_records('course_modules', 'section', $section->id);
+            }
+            
+            delete_records('course_sections', 'id', $section->id);
+        }
+        
+        return true;
     }
 
     function has_config() {
