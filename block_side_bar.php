@@ -43,11 +43,7 @@ class block_side_bar extends block_list {
         if (!isset($this->config->title)) {
             $this->config->title = '';
         }
-        
-        if (!empty($this->config->title)) {
-            $this->title = $this->config->title;
-        }
-        
+
         $course = get_record('course', 'id', $this->instance->pageid);
         
         $isteacher = isteacher($this->instance->pageid);
@@ -242,6 +238,12 @@ class block_side_bar extends block_list {
         }
         
         return true;
+    }
+
+    function specialization() {
+        if (!empty($this->config->title)) {
+            $this->title = $this->config->title;
+        }
     }
 
     function has_config() {
