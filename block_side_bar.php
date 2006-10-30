@@ -262,7 +262,10 @@ class block_side_bar extends block_list {
     }
 
     function applicable_formats() {
-        return array('course' => true);
+        return array(
+            'site-index' => true,
+            'course'     => true
+        );
     }
 
 }
