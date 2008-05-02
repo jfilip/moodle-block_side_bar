@@ -16,7 +16,7 @@ class block_side_bar extends block_list {
         global $CFG;
 
         $this->title = get_string('sidebar', 'block_side_bar');
-        $this->version = 2006022800;
+        $this->version = 2008050200;
 
     /// Make sure the global section start value is set.
         if (!isset($CFG->block_side_bar_section_start)) {
