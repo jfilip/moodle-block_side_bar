@@ -26,7 +26,6 @@ class block_side_bar extends block_list {
 
     function get_content() {
         global $USER, $CFG;
-
         if ($this->content !== NULL) {
             return $this->content;
         }
@@ -266,6 +265,19 @@ class block_side_bar extends block_list {
             'site-index' => true,
             'course'     => true
         );
+    }
+
+    function after_restore($restore) {
+        global $CFG;
+
+        // correct section_id for new course
+        $sql = "select id from {$CFG->prefix}course_sections ".
+            "where course={$this->instance->pageid} ".
+            "and section={$this->config->section} ";
+        $rec = get_record_sql( $sql );
+        $this->config->section_id = $rec->id;
+        parent::instance_config_commit();
+        return true;
     }
 
 }
