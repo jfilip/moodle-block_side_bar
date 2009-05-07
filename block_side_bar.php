@@ -54,7 +54,7 @@ class block_side_bar extends block_list {
     /// Create a new section for this block (if necessary).
         if (empty($this->config->section)) {
             $sql = "SELECT MAX(section) as sectionid
-                    FROM `{$CFG->prefix}course_sections`
+                    FROM {$CFG->prefix}course_sections
                     WHERE course='{$this->instance->pageid}'";
             $rec = get_record_sql($sql);
             
