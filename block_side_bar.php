@@ -5,18 +5,18 @@
  *
  * NOTE: Code modified from Moodle site_main_menu block.
  *
- * This program is free software: you can redistribute it and/or modify
+ * Moodle is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
+ * Moodle is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @package    base
  * @subpackage blocks-side_bar
@@ -32,8 +32,7 @@ class block_side_bar extends block_list {
     function init() {
         global $CFG;
 
-        $this->title   = get_string('blockname', 'block_side_bar');
-        $this->version = 2011061200;
+        $this->title = get_string('pluginname', 'block_side_bar');
 
         // Make sure the global section start value is set.
         if (!isset($CFG->block_side_bar_section_start)) {
@@ -42,8 +41,9 @@ class block_side_bar extends block_list {
     }
 
     function get_content() {
-        global $USER, $CFG;
-
+        global $USER, $CFG, $DB, $OUTPUT;
+//print_object($this);
+//die;
         if ($this->content !== NULL) {
             return $this->content;
         }
@@ -61,29 +61,23 @@ class block_side_bar extends block_list {
             $this->config->title = '';
         }
 
-        $course = get_record('course', 'id', $this->instance->pageid);
+        $course = $this->page->course;
 
-        if ($course->id == SITEID) {
-            $context = get_context_instance(CONTEXT_SYSTEM);
-        } else {
-            $context = get_context_instance(CONTEXT_COURSE, $course->id);
-        }
+        require_once($CFG->dirroot.'/course/lib.php');
 
-        $isteacher = (has_capability('moodle/legacy:teacher', $context, $USER->id, false) ||
-                      has_capability('moodle/legacy:editingteacher', $context, $USER->id, false) ||
-                      has_capability('moodle/legacy:admin', $context, $USER->id, false));
-        $isediting = isediting($course->id);
-        $ismoving  = ismoving($course->id);
+        $context   = get_context_instance(CONTEXT_COURSE, $course->id);
+        $isediting = $this->page->user_is_editing() && has_capability('moodle/course:manageactivities', $context);
+        $modinfo   = get_fast_modinfo($course);
 
         $section_start = $CFG->block_side_bar_section_start;
 
         // Create a new section for this block (if necessary).
         if (empty($this->config->section)) {
             $sql = "SELECT MAX(section) as sectionid
-                    FROM {$CFG->prefix}course_sections
-                    WHERE course = {$this->instance->pageid}";
+                    FROM {course_sections}
+                    WHERE course = ?";
 
-            $rec = get_record_sql($sql);
+            $rec = $DB->get_record_sql($sql, array($course->id));
 
             $sectionnum = $rec->sectionid;
 
@@ -94,12 +88,14 @@ class block_side_bar extends block_list {
             }
 
             $section = new stdClass;
-            $section->course   = $course->id;
-            $section->section  = $sectionnum;
-            $section->summary  = '';
-            $section->sequence = '';
-            $section->visible  = 1;
-            $section->id = insert_record('course_sections', $section);
+            $section->course        = $course->id;
+            $section->name          = get_string('sidebar', 'block_side_bar');
+            $section->section       = $sectionnum;
+            $section->summary       = '';
+            $section->summaryformat = 0;
+            $section->sequence      = '';
+            $section->visible       = 1;
+            $section->id = $DB->insert_record('course_sections', $section);
 
             if (empty($section->id)) {
                 if ($course->id == SITEID) {
@@ -118,12 +114,16 @@ class block_side_bar extends block_list {
 
         } else {
             if (empty($this->config->section_id)) {
-                $section = get_record('course_sections', 'course', $course->id, 'section', $this->config->section);
+                $params = array(
+                    'course' =>  $course->id,
+                    'section' => $this->config->section
+                );
+                $section = $DB->get_record('course_sections', $params);
 
                 $this->config->section_id = $section->id;
                 parent::instance_config_commit();
             } else {
-                $section = get_record('course_sections', 'id', $this->config->section_id);
+                $section = $DB->get_record('course_sections', array('id' => $this->config->section_id));
             }
 
             // Double check that the section number hasn't been modified by something else.
@@ -131,26 +131,129 @@ class block_side_bar extends block_list {
             if ($section->section != $this->config->section) {
                 $section->section = $this->config->section;
 
-                update_record('course_sections', $section);
+                $DB->update_record('course_sections', $section);
             }
         }
 
-        if (!empty($section) || $isediting) {
-            get_all_mods($course->id, $mods, $modnames, $modnamesplural, $modnamesused);
+//        if (!empty($section) || $isediting) {
+//            get_all_mods($course->id, $mods, $modnames, $modnamesplural, $modnamesused);
+//        }
+
+        // extra fast view mode
+        if (!$isediting) {
+            if (!empty($modinfo->sections[$this->config->section])) {
+                $options = array('overflowdiv'=>true);
+                foreach($modinfo->sections[$this->config->section] as $cmid) {
+                    $cm = $modinfo->cms[$cmid];
+                    if (!$cm->uservisible) {
+                        continue;
+                    }
+
+                    list($content, $instancename) =
+                            get_print_section_cm_text($cm, $course);
+
+                    if (!($url = $cm->get_url())) {
+                        $this->content->items[] = $content;
+                        $this->content->icons[] = '';
+                    } else {
+                        $linkcss = $cm->visible ? '' : ' class="dimmed" ';
+                        //Accessibility: incidental image - should be empty Alt text
+                        $icon = '<img src="' . $cm->get_icon_url() . '" class="icon" alt="" />&nbsp;';
+                        $this->content->items[] = '<a title="'.$cm->modplural.'" '.$linkcss.' '.$cm->extra.
+                                ' href="' . $url . '">' . $icon . $instancename . '</a>';
+                    }
+                }
+            }
+            return $this->content;
         }
+
+        // slow & hacky editing mode
+        $ismoving = ismoving($course->id);
+        $section  = get_course_section($this->config->section, $course->id);
+
+        get_all_mods($course->id, $mods, $modnames, $modnamesplural, $modnamesused);
 
         $groupbuttons     = $course->groupmode;
-        $groupbuttonslink = !$course->groupmodeforce;
+        $groupbuttonslink = (!$course->groupmodeforce);
 
         if ($ismoving) {
-            $strmovehere          = get_string('movehere');
-            $strmovefull          = strip_tags(get_string('movefull', '', "'$USER->activitycopyname'"));
-            $strcancel            = get_string('cancel');
+            $strmovehere = get_string('movehere');
+            $strmovefull = strip_tags(get_string('movefull', '', "'$USER->activitycopyname'"));
+            $strcancel= get_string('cancel');
+            $stractivityclipboard = $USER->activitycopyname;
         }
 
-        $modinfo     = unserialize($course->modinfo);
+        // Casting $course->modinfo to string prevents one notice when the field is null
         $editbuttons = '';
 
+        if ($ismoving) {
+            $this->content->icons[] = '<img src="'.$OUTPUT->pix_url('t/move') . '" class="iconsmall" alt="" />';
+            $this->content->items[] = $USER->activitycopyname.'&nbsp;(<a href="'.$CFG->wwwroot.'/course/mod.php?'.
+                                      'cancelcopy=true&amp;sesskey='.sesskey().'">'.$strcancel.'</a>)';
+        }
+
+        if (!empty($section->sequence)) {
+            $sectionmods = explode(',', $section->sequence);
+            $options = array('overflowdiv'=>true);
+            foreach ($sectionmods as $modnumber) {
+                if (empty($mods[$modnumber])) {
+                    continue;
+                }
+                $mod = $mods[$modnumber];
+                if (!$ismoving) {
+                    if ($groupbuttons) {
+                        if (! $mod->groupmodelink = $groupbuttonslink) {
+                            $mod->groupmode = $course->groupmode;
+                        }
+
+                    } else {
+                        $mod->groupmode = false;
+                    }
+                    $editbuttons = '<div class="buttons">'.make_editing_buttons($mod, true, true).'</div>';
+                } else {
+                    $editbuttons = '';
+                }
+                if ($mod->visible || has_capability('moodle/course:viewhiddenactivities', $context)) {
+                    if ($ismoving) {
+                        if ($mod->id == $USER->activitycopy) {
+                            continue;
+                        }
+                        $this->content->items[] = '<a title="'.$strmovefull.'" href="'.$CFG->wwwroot.'/course/mod.php'.
+                                                  '?moveto='.$mod->id.'&amp;sesskey='.sesskey().'"><img style="height'.
+                                                  ':16px; width:80px; border:0px" src="'.$OUTPUT->pix_url('movehere').
+                                                  '" alt="'.$strmovehere.'" /></a>';
+                        $this->content->icons[] = '';
+                    }
+                    list($content, $instancename) = get_print_section_cm_text($modinfo->cms[$modnumber], $course);
+                    $linkcss = $mod->visible ? '' : ' class="dimmed" ';
+
+                    if (!($url = $mod->get_url())) {
+                        $this->content->items[] = $content . $editbuttons;
+                        $this->content->icons[] = '';
+                    } else {
+                        //Accessibility: incidental image - should be empty Alt text
+                        $icon = '<img src="'.$mod->get_icon_url().'" class="icon" alt="" />&nbsp;';
+                        $this->content->items[] = '<a title="'.$mod->modfullname.'" '.$linkcss.' '.$mod->extra.
+                                                  ' href="'.$url.'">'.$icon.$instancename.'</a>'.$editbuttons;
+                    }
+                }
+            }
+        }
+
+        if ($ismoving) {
+            $this->content->items[] = '<a title="'.$strmovefull.'" href="'.$CFG->wwwroot.'/course/mod.php?'.
+                                      'movetosection='.$section->id.'&amp;sesskey='.sesskey().'"><img style="height'.
+                                      ':16px; width:80px; border:0px" src="'.$OUTPUT->pix_url('movehere').'" alt="'.
+                                      $strmovehere.'" /></a>';
+            $this->content->icons[] = '';
+        }
+
+        if (!empty($modnames)) {
+            $this->content->footer = print_section_add_menus($course, $this->config->section, $modnames, true, true);
+        } else {
+            $this->content->footer = '';
+        }
+/*
         if ($ismoving) {
             $this->content->icons[] = '&nbsp;<img align="bottom" src="'.$CFG->pixpath.'/t/move.gif" height="11" ' .
                                       'width="11" alt="" />';
@@ -170,7 +273,7 @@ class block_side_bar extends block_list {
 
                 if ($isediting && !$ismoving) {
                     if ($groupbuttons) {
-                        if (! $mod->groupmodelink = $groupbuttonslink) {
+                        if (!$mod->groupmodelink = $groupbuttonslink) {
                             $mod->groupmode = $course->groupmode;
                         }
                     } else {
@@ -193,7 +296,8 @@ class block_side_bar extends block_list {
                                                   '">'.'<img height="16" width="80" src="'.$CFG->pixpath.
                                                   '/movehere.gif" alt="'.$strmovehere.'" border="0" /></a>';
                         $this->content->icons[] = '';
-                   }
+                    }
+
                     $instancename = urldecode($modinfo[$modnumber]->name);
                     $instancename = format_string($instancename, true, $this->instance->pageid);
                     $linkcss = $mod->visible ? '' : ' class="dimmed" ';
@@ -237,25 +341,30 @@ class block_side_bar extends block_list {
         } else {
             $this->content->footer = '';
         }
-
+*/
         return $this->content;
     }
 
     function instance_delete() {
-        global $CFG;
+        global $CFG, $DB;
 
         if (empty($this->instance) || !isset($this->config->section)) {
             return true;
         }
 
         // Cleanup the section created by this block and any course modules.
-        $section = get_record('course_sections', 'section', $this->config->section, 'course', $this->instance->pageid);
+        $params = array(
+            'section' => $this->config->section,
+            'course'  => $this->instance->pageid
+        );
+
+        $section = $DB->get_record('course_sections', $params);
 
         if (empty($section)) {
             return true;
         }
 
-        if ($rs = get_recordset('course_modules', 'section', $section->id)) {
+        if ($rs = $DB->get_recordset('course_modules', array('section' => $section->id))) {
             $mods = array();
 
             while ($module = $rs->fetch_next_record) {
@@ -278,10 +387,10 @@ class block_side_bar extends block_list {
                 }
             }
 
-            rs_close($rs);
+            $rs->close();
         }
 
-        return delete_records('course_sections', 'id', $section->id);
+        return $DB->delete_records('course_sections', array('id' => $section->id));
     }
 
     function specialization() {
@@ -313,7 +422,7 @@ class block_side_bar extends block_list {
 
     function after_restore($restore) {
         // Get the correct course_sections record ID for the new course
-        $section = get_record('course_sections', 'course', $this->instance->pageid, 'section', $this->config->section);
+        $section = $DB->get_record('course_sections', 'course', $this->instance->pageid, 'section', $this->config->section);
 
         if (!empty($section->id)) {
             $this->config->section_id = $section->id;
@@ -324,5 +433,3 @@ class block_side_bar extends block_list {
     }
 
 }
-
-?>
