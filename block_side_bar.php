@@ -42,8 +42,7 @@ class block_side_bar extends block_list {
 
     function get_content() {
         global $USER, $CFG, $DB, $OUTPUT;
-//print_object($this);
-//die;
+
         if ($this->content !== NULL) {
             return $this->content;
         }
@@ -128,16 +127,15 @@ class block_side_bar extends block_list {
 
             // Double check that the section number hasn't been modified by something else.
             // Fixes problem found by Charlotte Owen when moving 'center column' course sections.
+print_object('$section->section: '.$section->section);
+print_object('$this->config->section: '.$this->config->section);
+print_object('$this->config->section_id: '.$this->config->section_id);
             if ($section->section != $this->config->section) {
                 $section->section = $this->config->section;
 
                 $DB->update_record('course_sections', $section);
             }
         }
-
-//        if (!empty($section) || $isediting) {
-//            get_all_mods($course->id, $mods, $modnames, $modnamesplural, $modnamesused);
-//        }
 
         // extra fast view mode
         if (!$isediting) {
@@ -149,8 +147,7 @@ class block_side_bar extends block_list {
                         continue;
                     }
 
-                    list($content, $instancename) =
-                            get_print_section_cm_text($cm, $course);
+                    list($content, $instancename) = get_print_section_cm_text($cm, $course);
 
                     if (!($url = $cm->get_url())) {
                         $this->content->items[] = $content;
@@ -158,12 +155,13 @@ class block_side_bar extends block_list {
                     } else {
                         $linkcss = $cm->visible ? '' : ' class="dimmed" ';
                         //Accessibility: incidental image - should be empty Alt text
-                        $icon = '<img src="' . $cm->get_icon_url() . '" class="icon" alt="" />&nbsp;';
-                        $this->content->items[] = '<a title="'.$cm->modplural.'" '.$linkcss.' '.$cm->extra.
-                                ' href="' . $url . '">' . $icon . $instancename . '</a>';
+                        $icon = '<img src="'.$cm->get_icon_url().'" class="icon" alt="" />&nbsp;';
+                        $this->content->items[] = '<a title="'.$cm->modplural.'" '.$linkcss.' '.$cm->extra.' href="'.
+                                                  $url.'">'.$icon.$instancename.'</a>';
                     }
                 }
             }
+
             return $this->content;
         }
 
@@ -253,95 +251,7 @@ class block_side_bar extends block_list {
         } else {
             $this->content->footer = '';
         }
-/*
-        if ($ismoving) {
-            $this->content->icons[] = '&nbsp;<img align="bottom" src="'.$CFG->pixpath.'/t/move.gif" height="11" ' .
-                                      'width="11" alt="" />';
-            $this->content->items[] = $USER->activitycopyname.'&nbsp;(<a href="'.$CFG->wwwroot.'/course/mod.php' .
-                                      '?cancelcopy=true&amp;sesskey='.$USER->sesskey.'">'.$strcancel.'</a>)';
-        }
 
-        if (!empty($section) && !empty($section->sequence)) {
-            $sectionmods = explode(',', $section->sequence);
-
-            foreach ($sectionmods as $modnumber) {
-                if (empty($mods[$modnumber])) {
-                    continue;
-                }
-
-                $mod = $mods[$modnumber];
-
-                if ($isediting && !$ismoving) {
-                    if ($groupbuttons) {
-                        if (!$mod->groupmodelink = $groupbuttonslink) {
-                            $mod->groupmode = $course->groupmode;
-                        }
-                    } else {
-                        $mod->groupmode = false;
-                    }
-
-                    $editbuttons = '<br />'.make_editing_buttons($mod, true, true);
-                } else {
-                    $editbuttons = '';
-                }
-
-                if ($mod->visible || $isteacher) {
-                    if ($ismoving) {
-                        if ($mod->id == $USER->activitycopy) {
-                            continue;
-                        }
-
-                        $this->content->items[] = '<a title="'.$strmovefull.'" href="'.$CFG->wwwroot.
-                                                  '/course/mod.php?moveto='.$mod->id.'&amp;sesskey='.$USER->sesskey.
-                                                  '">'.'<img height="16" width="80" src="'.$CFG->pixpath.
-                                                  '/movehere.gif" alt="'.$strmovehere.'" border="0" /></a>';
-                        $this->content->icons[] = '';
-                    }
-
-                    $instancename = urldecode($modinfo[$modnumber]->name);
-                    $instancename = format_string($instancename, true, $this->instance->pageid);
-                    $linkcss = $mod->visible ? '' : ' class="dimmed" ';
-
-                    if (!empty($modinfo[$modnumber]->extra)) {
-                        $extra = urldecode($modinfo[$modnumber]->extra);
-                    } else {
-                        $extra = '';
-                    }
-
-                    if (!empty($modinfo[$modnumber]->icon)) {
-                        $icon = $CFG->pixpath.'/'.urldecode($modinfo[$modnumber]->icon);
-                    } else {
-                        $icon = $CFG->modpixpath.'/'.$mod->modname.'/icon.gif';
-                    }
-
-                    if ($mod->modname == 'label') {
-                        $this->content->items[] = format_text($extra, FORMAT_HTML).$editbuttons;
-                        $this->content->icons[] = '';
-                    } else {
-                        $this->content->items[] = '<a title="'.$mod->modfullname.'" '.$linkcss.' '.$extra.
-                                                  ' href="'.$CFG->wwwroot.'/mod/'.$mod->modname.'/view.php?id='.
-                                                  $mod->id.'">'.$instancename.'</a>'.$editbuttons;
-                        $this->content->icons[] = '<img src="'.$icon.'" height="16" width="16" alt="'.
-                                                  $mod->modfullname.'" />';
-                    }
-                }
-            }
-        }
-
-        if ($ismoving) {
-            $this->content->items[] = '<a title="'.$strmovefull.'" href="'.$CFG->wwwroot.'/course/mod.php?' .
-                                      'movetosection='.$section->id.'&amp;sesskey='.$USER->sesskey.'">'.
-                                      '<img height="16" width="80" src="'.$CFG->pixpath.'/movehere.gif" alt="'.
-                                      $strmovehere.'" border="0" /></a>';
-            $this->content->icons[] = '';
-        }
-
-        if ($isediting && $modnames) {
-            $this->content->footer = print_section_add_menus($course, $this->config->section, $modnames, true, true);
-        } else {
-            $this->content->footer = '';
-        }
-*/
         return $this->content;
     }
 
@@ -355,12 +265,10 @@ class block_side_bar extends block_list {
         // Cleanup the section created by this block and any course modules.
         $params = array(
             'section' => $this->config->section,
-            'course'  => $this->instance->pageid
+            'course'  => $this->page->course->id
         );
 
-        $section = $DB->get_record('course_sections', $params);
-
-        if (empty($section)) {
+        if (!$section = $DB->get_record('course_sections', $params)) {
             return true;
         }
 
@@ -371,7 +279,7 @@ class block_side_bar extends block_list {
                 $modid = $module->module;
 
                 if (!isset($mods[$modid])) {
-                    $mods[$modid] = get_field('modules', 'name', 'id', $modid);
+                    $mods[$modid] = $DB->get_field('modules', 'name', array('id' => $modid));
                 }
 
                 $mod_lib = $CFG->dirroot.'/mod/'.$mods[$modid].'/lib.php';

@@ -1,6 +1,5 @@
 <?php
 
-//$string['blockname'] = 'Side Bar';
 $string['configsectionnumber'] = 'Enter new section starting number';
 $string['configtitle'] = 'Enter new block title';
 $string['error_couldnotaddsection'] = 'Could not add new section to course';
