@@ -127,9 +127,6 @@ class block_side_bar extends block_list {
 
             // Double check that the section number hasn't been modified by something else.
             // Fixes problem found by Charlotte Owen when moving 'center column' course sections.
-print_object('$section->section: '.$section->section);
-print_object('$this->config->section: '.$this->config->section);
-print_object('$this->config->section_id: '.$this->config->section_id);
             if ($section->section != $this->config->section) {
                 $section->section = $this->config->section;
 
