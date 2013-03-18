@@ -1,32 +1,35 @@
--------------------------------------------------------------------------------
-SIDE BAR BLOCK
--------------------------------------------------------------------------------
+
+Side Bar Block
+==============
+
 2006.03.01
-The modification contained herein was provided by Open Knowledge Technologies
-(http://www.oktech.ca/) and Fernando Oliveira of MoodleFN and First Nations
-Schools.
+----------
+
+The modification contained herein was originally provided by [Open Knowledge Technologies](http://www.oktech.ca)
+and Fernando Oliveira of MoodleFN and First Nations Schools.
 
 Contributors:
-Justin Filip (jfilip@oktech.ca)
-Mike Churchward (mike@oktech.ca)
-Fernando Oliveira (fernandooliveira@knet.ca)
 
--------------------------------------------------------------------------------
-INSTALLATION:
+*	Justin Filip (jfilip@remote-learner.net)
+*	Mike Churchward (mike@remote-learner.net)
+*	Fernando Oliveira (fernandooliveira@knet.ca)
 
-To install and use, unzip this file into your Moodle root directory making sure
+Installation
+=============
+
+To install and use, unzip this file into your Moodle ``/blocks/`` directory making sure
 that you 'use folder names'. This will create the following files:
 
-/blocks/side_bar/lang/en/block_side_bar.php
-/blocks/side_bar/block_side_bar.php
-/blocks/side_bar/block_side_bar-README.txt
-/blocks/side_bar/config_global.html
-/blocks/side_bar/config_instance.html
+	/blocks/side_bar/lang/en/block_side_bar.php
+	/blocks/side_bar/block_side_bar.php
+	/blocks/side_bar/block_side_bar-README.txt
+	/blocks/side_bar/config_global.html
+	/blocks/side_bar/config_instance.html
 
 Visit your admin section to complete installation of the block. 
 
--------------------------------------------------------------------------------
-FUNCTION:
+Function
+========
 
 This block allows you to create separate activities and resources in a course
 that do not have to appear in course sections. The block can have multiple

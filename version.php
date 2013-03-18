@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -15,4 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-$plugin->version = 2011061200;
+/**
+ * Version details
+ *
+ * @package    block_side_bar
+ * @see        block_site_main_menu
+ * @author     Justin Filip <jfilip@remote-learner.ca>
+ * @copyright  2011 onwards Justin Filip
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+defined('MOODLE_INTERNAL') || die();
+
+$plugin->version   = 2011061201;
+$plugin->requires  = 2011120500;
+$plugin->component = 'block_side_bar';
+$plugin->maturity  = MATURITY_BETA;

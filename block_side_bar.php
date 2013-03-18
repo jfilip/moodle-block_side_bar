@@ -1,35 +1,34 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * Allows for arbitrarily adding resources or activities to extra (non-standard) course sections with instance
  * configuration for the block title.
  *
- * NOTE: Code modified from Moodle site_main_menu block.
- *
- * Moodle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Moodle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
- *
- * @package    base
- * @subpackage blocks-side_bar
- * @see        blocks-site_main_menu
+ * @package    block_side_bar
+ * @see        block_site_main_menu
  * @author     Justin Filip <jfilip@remote-learner.ca>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2011 Justin Filip
- *
+ * @copyright  2011 onwards Justin Filip
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-class block_side_bar extends block_list {
+defined('MOODLE_INTERNAL') || die();
 
-    function init() {
+class block_side_bar extends block_list {
+    public function init() {
         global $CFG;
 
         $this->title = get_string('pluginname', 'block_side_bar');
@@ -40,14 +39,19 @@ class block_side_bar extends block_list {
         }
     }
 
-    function get_content() {
+    /**
+     * Parent class version of this function simply returns NULL This should be implemented by the derived class to return the content object.
+     *
+     * @return object The content object
+     */
+    public function get_content() {
         global $USER, $CFG, $DB, $OUTPUT;
 
-        if ($this->content !== NULL) {
+        if ($this->content !== null) {
             return $this->content;
         }
 
-        $this->content = new stdClass;
+        $this->content = new stdClass();
         $this->content->items  = array();
         $this->content->icons  = array();
         $this->content->footer = '';
@@ -61,10 +65,8 @@ class block_side_bar extends block_list {
         }
 
         $course = $this->page->course;
-
         require_once($CFG->dirroot.'/course/lib.php');
-
-        $context   = get_context_instance(CONTEXT_COURSE, $course->id);
+        $context   = context_course::instance($course->id);
         $isediting = $this->page->user_is_editing() && has_capability('moodle/course:manageactivities', $context);
         $modinfo   = get_fast_modinfo($course);
 
@@ -72,9 +74,9 @@ class block_side_bar extends block_list {
 
         // Create a new section for this block (if necessary).
         if (empty($this->config->section)) {
-            $sql = "SELECT MAX(section) as sectionid
-                    FROM {course_sections}
-                    WHERE course = ?";
+            $sql = "SELECT MAX(section) AS sectionid
+                      FROM {course_sections}
+                     WHERE course = ?";
 
             $rec = $DB->get_record_sql($sql, array($course->id));
 
@@ -114,7 +116,7 @@ class block_side_bar extends block_list {
         } else {
             if (empty($this->config->section_id)) {
                 $params = array(
-                    'course' =>  $course->id,
+                    'course'  => $course->id,
                     'section' => $this->config->section
                 );
                 $section = $DB->get_record('course_sections', $params);
@@ -137,8 +139,8 @@ class block_side_bar extends block_list {
         // extra fast view mode
         if (!$isediting) {
             if (!empty($modinfo->sections[$this->config->section])) {
-                $options = array('overflowdiv'=>true);
-                foreach($modinfo->sections[$this->config->section] as $cmid) {
+                $options = array('overflowdiv' => true);
+                foreach ($modinfo->sections[$this->config->section] as $cmid) {
                     $cm = $modinfo->cms[$cmid];
                     if (!$cm->uservisible) {
                         continue;
@@ -151,7 +153,7 @@ class block_side_bar extends block_list {
                         $this->content->icons[] = '';
                     } else {
                         $linkcss = $cm->visible ? '' : ' class="dimmed" ';
-                        //Accessibility: incidental image - should be empty Alt text
+                        // Accessibility: incidental image - should be empty Alt text
                         $icon = '<img src="'.$cm->get_icon_url().'" class="icon" alt="" />&nbsp;';
                         $this->content->items[] = '<a title="'.$cm->modplural.'" '.$linkcss.' '.$cm->extra.' href="'.
                                                   $url.'">'.$icon.$instancename.'</a>';
@@ -226,7 +228,7 @@ class block_side_bar extends block_list {
                         $this->content->items[] = $content . $editbuttons;
                         $this->content->icons[] = '';
                     } else {
-                        //Accessibility: incidental image - should be empty Alt text
+                        // Accessibility: incidental image - should be empty Alt text
                         $icon = '<img src="'.$mod->get_icon_url().'" class="icon" alt="" />&nbsp;';
                         $this->content->items[] = '<a title="'.$mod->modfullname.'" '.$linkcss.' '.$mod->extra.
                                                   ' href="'.$url.'">'.$icon.$instancename.'</a>'.$editbuttons;
@@ -252,7 +254,12 @@ class block_side_bar extends block_list {
         return $this->content;
     }
 
-    function instance_delete() {
+    /**
+     * Delete everything related to this instance if you have been using persistent storage other than the configdata field.
+     *
+     * @return bool Status result
+     */
+    public function instance_delete() {
         global $CFG, $DB;
 
         if (empty($this->instance) || !isset($this->config->section)) {
@@ -298,34 +305,59 @@ class block_side_bar extends block_list {
         return $DB->delete_records('course_sections', array('id' => $section->id));
     }
 
-    function specialization() {
+    /**
+     * This function is called on your subclass right after an instance is loaded. Use this function to act on instance data just
+     * after it's loaded and before anything else is done. For instance: if your block will have different title's depending on
+     * location (site, course, blog, etc)
+     */
+    public function specialization() {
         if (!empty($this->config->title)) {
             $this->title = $this->config->title;
         }
     }
 
-    function has_config() {
+    /**
+     * Subclasses should override this and return true if the subclass block has a config_global.html file.
+     *
+     * @return bool
+     */
+    public function has_config() {
         return true;
     }
 
-    function config_save($data) {
-        if (!empty($data->block_side_bar_section_start)) {
-            set_config('block_side_bar_section_start', intval($data->block_side_bar_section_start));
-        }
-    }
-
-    function instance_allow_multiple() {
+    /**
+     * Are you going to allow multiple instances of each block? If yes, then it is assumed that the block WILL USE per-instance configuration.
+     * @return bool
+     */
+    public function instance_allow_multiple() {
         return true;
     }
 
-    function applicable_formats() {
+    /**
+     * Which page types this block may appear on.
+     *
+     * The information returned here is processed by the
+     * {@link blocks_name_allowed_in_format()} function. Look there if you need
+     * to know exactly how this works.
+     *
+     * Default case: everything except mod and tag.
+     *
+     * @return array page-type prefix => true/false.
+     */
+    public function applicable_formats() {
         return array(
             'site-index'  => true,
             'course-view' => true
         );
     }
 
-    function after_restore($restore) {
+    /**
+     * Code executed after a course is restored with this block present in the restore data. Allows for setting the new course
+     * section ID for the restored course as part of this block's instance configuration.
+     *
+     * @return bool Status indicator
+     */
+    public function after_restore() {
         // Get the correct course_sections record ID for the new course
         $section = $DB->get_record('course_sections', 'course', $this->instance->pageid, 'section', $this->config->section);
 
@@ -336,5 +368,4 @@ class block_side_bar extends block_list {
 
         return true;
     }
-
 }
