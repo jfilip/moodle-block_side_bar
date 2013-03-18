@@ -57,6 +57,9 @@ class block_side_bar extends block_list {
         $this->content->footer = '';
 
         if (empty($this->instance)) {
+            if (!isset($this->content)) {
+                $this->content = new stdClass();
+            }
             return $this->content;
         }
 
@@ -247,6 +250,9 @@ class block_side_bar extends block_list {
 
         if (!empty($modnames)) {
             $this->content->footer = print_section_add_menus($course, $this->config->section, $modnames, true, true);
+            // Replace modchooser with dropdown
+            $this->content->footer = str_replace('hiddenifjs addresourcedropdown', 'visibleifjs addresourcedropdown', $this->content->footer);
+            $this->content->footer = str_replace('visibleifjs addresourcemodchooser', 'hiddenifjs addresourcemodchooser', $this->content->footer);
         } else {
             $this->content->footer = '';
         }
