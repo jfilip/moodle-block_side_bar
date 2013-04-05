@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version details
+ * Side Bar block capabilities.
  *
  * @package    block_side_bar
  * @see        block_site_main_menu
@@ -26,10 +26,18 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['configsectionnumber'] = 'Enter new section starting number';
-$string['configtitle'] = 'Enter new block title';
-$string['error_couldnotaddsection'] = 'Could not add new section to course';
-$string['pluginname'] = 'Side Bar';
-$string['sectionnumberwarning'] = 'WARNING: This value should be high enough that it will not interfere with regular course section values.  Also, if you already have Side Bar blocks setup make sure you modify this value to something <i>larger</i> than the maximum section number already existing for a block.  If in doubt, don\'t change this number.';
-$string['sidebar'] = 'Side Bar';
-$string['sectionsummary'] = 'This section contains the activities added by the Side Bar block. It is meant to be listed as Orphaned Activities when editing mode is enabled. If you see this section appear normally within your course (when editing mode is disabled), you should click on the following link $a.';
+$capabilities = array(
+
+    'block/side_bar:addinstance' => array(
+        'riskbitmask' => RISK_SPAM | RISK_XSS,
+
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_BLOCK,
+        'archetypes' => array(
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW
+        ),
+
+        'clonepermissionsfrom' => 'moodle/site:manageblocks'
+    ),
+);

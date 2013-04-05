@@ -64,6 +64,9 @@ class block_side_bar extends block_list {
         }
 
         if (!isset($this->config->title)) {
+            if (!isset($this->config)) {
+                $this->config = new stdClass();
+            }
             $this->config->title = '';
         }
 
@@ -71,47 +74,16 @@ class block_side_bar extends block_list {
         require_once($CFG->dirroot.'/course/lib.php');
         $context   = context_course::instance($course->id);
         $isediting = $this->page->user_is_editing() && has_capability('moodle/course:manageactivities', $context);
-        $modinfo   = get_fast_modinfo($course);
 
         $section_start = $CFG->block_side_bar_section_start;
 
         // Create a new section for this block (if necessary).
         if (empty($this->config->section)) {
-            $sql = "SELECT MAX(section) AS sectionid
-                      FROM {course_sections}
-                     WHERE course = ?";
-
-            $rec = $DB->get_record_sql($sql, array($course->id));
-
-            $sectionnum = $rec->sectionid;
-
-            if ($sectionnum < $section_start) {
-                $sectionnum = $section_start;
-            } else {
-                $sectionnum++;
+            require_once($CFG->dirroot.'/blocks/side_bar/locallib.php');
+            if (null == ($section = block_side_bar_create_section($course))) {
+                return $this->content;
             }
 
-            $section = new stdClass;
-            $section->course        = $course->id;
-            $section->name          = get_string('sidebar', 'block_side_bar');
-            $section->section       = $sectionnum;
-            $section->summary       = '';
-            $section->summaryformat = 0;
-            $section->sequence      = '';
-            $section->visible       = 1;
-            $section->id = $DB->insert_record('course_sections', $section);
-
-            if (empty($section->id)) {
-                if ($course->id == SITEID) {
-                    $link = $CFG->wwwroot.'/';
-                } else {
-                    $link = $CFG->wwwroot.'/course/view.php?id='.$course->id;
-                }
-
-                print_error('error_couldnotaddsection', 'block_side_bar', $link);
-            }
-
-            // Store the section number and ID of the DB record for that section.
             $this->config->section    = $section->section;
             $this->config->section_id = $section->id;
             parent::instance_config_commit();
@@ -128,18 +100,28 @@ class block_side_bar extends block_list {
                 parent::instance_config_commit();
             } else {
                 $section = $DB->get_record('course_sections', array('id' => $this->config->section_id));
+                if (empty($section)) {
+                    require_once($CFG->dirroot.'/blocks/side_bar/locallib.php');
+                    if (null == ($section = block_side_bar_create_section($course))) {
+                        return $this->content;
+                    }
+
+                    $this->config->section    = $section->section;
+                    $this->config->section_id = $section->id;
+                    parent::instance_config_commit();
+                }
             }
 
             // Double check that the section number hasn't been modified by something else.
             // Fixes problem found by Charlotte Owen when moving 'center column' course sections.
             if ($section->section != $this->config->section) {
                 $section->section = $this->config->section;
-
                 $DB->update_record('course_sections', $section);
             }
         }
 
         // extra fast view mode
+        $modinfo = get_fast_modinfo($course);
         if (!$isediting) {
             if (!empty($modinfo->sections[$this->config->section])) {
                 $options = array('overflowdiv' => true);
@@ -169,9 +151,16 @@ class block_side_bar extends block_list {
 
         // slow & hacky editing mode
         $ismoving = ismoving($course->id);
-        $section  = get_course_section($this->config->section, $course->id);
 
-        get_all_mods($course->id, $mods, $modnames, $modnamesplural, $modnamesused);
+        if (!$cs = $DB->get_record('course_sections', array('section' => $this->config->section, 'course' => $course->id))) {
+            debugging('Could not get course section record for section '.$this->config->section, DEBUG_DEVELOPER);
+            return $this->content;
+        }
+
+        $modinfo = get_fast_modinfo($course);
+        $section = $modinfo->get_section_info($this->config->section);
+
+        $modnames = get_module_types_names();
 
         $groupbuttons     = $course->groupmode;
         $groupbuttonslink = (!$course->groupmodeforce);
@@ -187,19 +176,19 @@ class block_side_bar extends block_list {
         $editbuttons = '';
 
         if ($ismoving) {
-            $this->content->icons[] = '<img src="'.$OUTPUT->pix_url('t/move') . '" class="iconsmall" alt="" />';
+            $this->content->icons[] = '<img src="'.$OUTPUT->pix_url('t/move').'" class="iconsmall" alt="" />';
             $this->content->items[] = $USER->activitycopyname.'&nbsp;(<a href="'.$CFG->wwwroot.'/course/mod.php?'.
                                       'cancelcopy=true&amp;sesskey='.sesskey().'">'.$strcancel.'</a>)';
         }
 
-        if (!empty($section->sequence)) {
-            $sectionmods = explode(',', $section->sequence);
-            $options = array('overflowdiv'=>true);
-            foreach ($sectionmods as $modnumber) {
-                if (empty($mods[$modnumber])) {
+        if (!empty($modinfo->sections[$this->config->section])) {
+            $options = array('overflowdiv' => true);
+            foreach ($modinfo->sections[$this->config->section] as $modnumber) {
+                $mod = $modinfo->cms[$modnumber];
+                if (!$mod->uservisible) {
                     continue;
                 }
-                $mod = $mods[$modnumber];
+
                 if (!$ismoving) {
                     if ($groupbuttons) {
                         if (! $mod->groupmodelink = $groupbuttonslink) {
@@ -228,7 +217,7 @@ class block_side_bar extends block_list {
                     $linkcss = $mod->visible ? '' : ' class="dimmed" ';
 
                     if (!($url = $mod->get_url())) {
-                        $this->content->items[] = $content . $editbuttons;
+                        $this->content->items[] = $content.$editbuttons;
                         $this->content->icons[] = '';
                     } else {
                         // Accessibility: incidental image - should be empty Alt text
@@ -249,7 +238,7 @@ class block_side_bar extends block_list {
         }
 
         if (!empty($modnames)) {
-            $this->content->footer = print_section_add_menus($course, $this->config->section, $modnames, true, true);
+            $this->content->footer = print_section_add_menus($course, $this->config->section, $modnames, true, true, $this->config->section);
             // Replace modchooser with dropdown
             $this->content->footer = str_replace('hiddenifjs addresourcedropdown', 'visibleifjs addresourcedropdown', $this->content->footer);
             $this->content->footer = str_replace('visibleifjs addresourcemodchooser', 'hiddenifjs addresourcemodchooser', $this->content->footer);
@@ -273,42 +262,66 @@ class block_side_bar extends block_list {
         }
 
         // Cleanup the section created by this block and any course modules.
+        $sql = "SELECT cm.id, cm.instance, mm.name AS modname
+                  FROM {course_sections} cs
+            INNER JOIN {course_modules} cm ON cm.section = cs.id
+            INNER JOIN {modules} mm ON mm.id = cm.module
+                 WHERE cs.section = :section
+                   AND cs.course = :course";
+
         $params = array(
             'section' => $this->config->section,
             'course'  => $this->page->course->id
         );
 
-        if (!$section = $DB->get_record('course_sections', $params)) {
-            return true;
-        }
-
-        if ($rs = $DB->get_recordset('course_modules', array('section' => $section->id))) {
-            $mods = array();
-
-            while ($module = $rs->fetch_next_record) {
-                $modid = $module->module;
-
-                if (!isset($mods[$modid])) {
-                    $mods[$modid] = $DB->get_field('modules', 'name', array('id' => $modid));
-                }
-
-                $mod_lib = $CFG->dirroot.'/mod/'.$mods[$modid].'/lib.php';
-
+        if ($mods = $DB->get_records_sql($sql, $params)) {
+            foreach ($mods as $mod) {
+                $mod_lib = $CFG->dirroot.'/mod/'.$mod->modname.'/lib.php';
                 if (file_exists($mod_lib)) {
                     require_once($mod_lib);
 
-                    $delete_func = $mods[$modid].'_delete_instance';
+                    $delete_func = $mod->modname.'_delete_instance';
 
                     if (function_exists($delete_func)) {
-                        $delete_func($module->instance);
+                        $delete_func($mod->instance);
                     }
                 }
             }
-
-            $rs->close();
         }
 
-        return $DB->delete_records('course_sections', array('id' => $section->id));
+        // Delete the course section for this block instance
+        $DB->delete_records('course_sections_availability', array('coursesectionid' => $this->config->section_id));
+        $DB->delete_records('course_sections_avail_fields', array('coursesectionid' => $this->config->section_id));
+        $DB->delete_records('course_sections', array('id' => $this->config->section_id));
+        rebuild_course_cache($this->page->course->id, true);
+
+        // if (!$section = $DB->get_record('course_sections', $params)) {
+        //  return true;
+        // }
+
+        // if ($modules = $DB->get_recordset('course_modules', array('section' => $section->id))) {
+        //  $mods = array();
+
+        //  foreach($modules as $module) {
+        //      $modid = $module->module;
+
+        //      if (!isset($mods[$modid])) {
+        //          $mods[$modid] = $DB->get_field('modules', 'name', array('id' => $modid));
+        //      }
+
+        //      $mod_lib = $CFG->dirroot.'/mod/'.$mods[$modid].'/lib.php';
+
+        //      if (file_exists($mod_lib)) {
+        //          require_once($mod_lib);
+
+        //          $delete_func = $mods[$modid].'_delete_instance';
+
+        //          if (function_exists($delete_func)) {
+        //              $delete_func($module->instance);
+        //          }
+        //      }
+        //  }
+        // }
     }
 
     /**
