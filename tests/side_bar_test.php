@@ -70,8 +70,8 @@ class blockSideBarTestcase extends advanced_testcase {
         global $DB;
 
         $dg = $this->getDataGenerator();
-        $dg->create_course_section(array('course' => $courseid, 'section' => 1000));
-        $section = $DB->get_record('course_sections', array('course' => $courseid, 'section' => 1000), 'id, section, name, visible');
+        $dg->create_course_section(array('course' => $courseid, 'section' => $sectionnum));
+        $section = $DB->get_record('course_sections', array('course' => $courseid, 'section' => $sectionnum), 'id, section, name, visible');
         $section->name          = get_string('sidebar', 'block_side_bar');
         $section->summary       = get_string('sectionsummary', 'block_side_bar');
         $section->summaryformat = FORMAT_HTML;
@@ -505,5 +505,188 @@ class blockSideBarTestcase extends advanced_testcase {
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
         $this->validate_sidebar_course_section($sbsection, 20);
+    }
+
+    /**
+     * Validate that running the migration function when there is no migration necessary does not modify any data when the
+     * sidebar section does not contain an activity.
+     */
+    public function test_migrate_old_section_unnecessary_without_an_activity() {
+        global $DB;
+
+        $this->resetAfterTest();
+        $dg = $this->getDataGenerator();
+
+        // Create test course data
+        $course = $dg->create_course(array('format' => 'topics', 'numsections' => 10));
+
+        // Create the main course sections for this course (section 1 is already created above).
+        for ($i = 2; $i <= 10; $i++) {
+            $dg->create_course_section(array('course' => $course->id, 'section' => $i));
+        }
+
+        // Create a sidebar course section containing an activity module
+        $this->create_sidebar_course_section($course->id, 11);
+
+        // Setup the course section for the Side Bar block-managed activities
+        $sectioninfo = block_side_bar_migrate_old_section($course, 11);
+
+        // Ensure returned data is what we expect
+        $this->assertTrue(is_object($sectioninfo));
+        $this->assertObjectHasAttribute('id', $sectioninfo);
+        $this->assertObjectHasAttribute('section', $sectioninfo);
+        $this->assertEquals(11, $sectioninfo->section);
+        $this->assertEquals(11, $DB->count_records('course_sections', array('course' => $course->id)));
+
+        // Load the new section record from the DB to make sure the stored values are setup correctly
+        $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
+        $this->validate_sidebar_course_section($sbsection, 11);
+    }
+
+    /**
+     * Validate that running the migration function when there is no migration necessary does not modify any data when the
+     * the sidebar section contains an activity.
+     */
+    public function test_migrate_old_section_unnecessary_with_an_activity() {
+        global $DB;
+
+        $this->resetAfterTest();
+        $dg = $this->getDataGenerator();
+
+        // Create test course data
+        $course = $dg->create_course(array('format' => 'topics', 'numsections' => 10));
+
+        // Create the main course sections for this course (section 1 is already created above).
+        for ($i = 2; $i <= 10; $i++) {
+            $dg->create_course_section(array('course' => $course->id, 'section' => $i));
+        }
+
+        // Create a sidebar course section containing an activity module
+        $this->create_sidebar_course_section($course->id, 11);
+        $page = $dg->create_module('page', array('course' => $course->id), array('section' => 11));
+
+        // Setup the course section for the Side Bar block-managed activities
+        $sectioninfo = block_side_bar_migrate_old_section($course, 11);
+
+        // Ensure returned data is what we expect
+        $this->assertTrue(is_object($sectioninfo));
+        $this->assertObjectHasAttribute('id', $sectioninfo);
+        $this->assertObjectHasAttribute('section', $sectioninfo);
+        $this->assertEquals(11, $sectioninfo->section);
+        $this->assertEquals(11, $DB->count_records('course_sections', array('course' => $course->id)));
+
+        // Load the new section record from the DB to make sure the stored values are setup correctly
+        $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
+        $this->validate_sidebar_course_section($sbsection, 11);
+    }
+
+    /**
+     * Validate that running the migration function when there is no migration necessary does not modify any data when the
+     * the sidebar section contains an activity.
+     */
+    public function test_migrate_old_section_multiple_instances_sequential() {
+        global $DB;
+
+        $this->resetAfterTest();
+        $dg = $this->getDataGenerator();
+
+        // Create test course data
+        $course = $dg->create_course(array('format' => 'topics', 'numsections' => 10));
+
+        // Create the main course sections for this course (section 1 is already created above).
+        for ($i = 2; $i <= 10; $i++) {
+            $dg->create_course_section(array('course' => $course->id, 'section' => $i));
+        }
+
+        // Create a sidebar course section containing an activity module
+        $this->create_sidebar_course_section($course->id, 1000);
+        $page = $dg->create_module('page', array('course' => $course->id), array('section' => 1000));
+
+        // Create an additional sidebar course section containing an activity module
+        $this->create_sidebar_course_section($course->id, 1001);
+        $page = $dg->create_module('page', array('course' => $course->id), array('section' => 1001));
+
+        // Setup the course section for the Side Bar block-managed activities
+        $sectioninfo = block_side_bar_migrate_old_section($course, 1000);
+
+        // Ensure returned data is what we expect
+        $this->assertTrue(is_object($sectioninfo));
+        $this->assertObjectHasAttribute('id', $sectioninfo);
+        $this->assertObjectHasAttribute('section', $sectioninfo);
+        $this->assertEquals(11, $sectioninfo->section);
+        $this->assertEquals(12, $DB->count_records('course_sections', array('course' => $course->id)));
+
+        // Load the new section record from the DB to make sure the stored values are setup correctly
+        $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
+        $this->validate_sidebar_course_section($sbsection, 11);
+
+        // Setup the course section for the Side Bar block-managed activities
+        $sectioninfo = block_side_bar_migrate_old_section($course, 1001);
+
+        // Ensure returned data is what we expect
+        $this->assertTrue(is_object($sectioninfo));
+        $this->assertObjectHasAttribute('id', $sectioninfo);
+        $this->assertObjectHasAttribute('section', $sectioninfo);
+        $this->assertEquals(12, $sectioninfo->section);
+        $this->assertEquals(12, $DB->count_records('course_sections', array('course' => $course->id)));
+
+        // Load the new section record from the DB to make sure the stored values are setup correctly
+        $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
+        $this->validate_sidebar_course_section($sbsection, 12);
+    }
+
+    /**
+     * Validate that running the migration function when there is no migration necessary does not modify any data when the
+     * the sidebar section contains an activity.
+     */
+    public function test_migrate_old_section_multiple_instances_nonsequential() {
+        global $DB;
+
+        $this->resetAfterTest();
+        $dg = $this->getDataGenerator();
+
+        // Create test course data
+        $course = $dg->create_course(array('format' => 'topics', 'numsections' => 10));
+
+        // Create the main course sections for this course (section 1 is already created above).
+        for ($i = 2; $i <= 10; $i++) {
+            $dg->create_course_section(array('course' => $course->id, 'section' => $i));
+        }
+
+        // Create a sidebar course section containing an activity module
+        $this->create_sidebar_course_section($course->id, 1000);
+        $page = $dg->create_module('page', array('course' => $course->id), array('section' => 1000));
+
+        // Create an additional sidebar course section containing an activity module
+        $this->create_sidebar_course_section($course->id, 1001);
+        $page = $dg->create_module('page', array('course' => $course->id), array('section' => 1001));
+
+        // Setup the course section for the Side Bar block-managed activities
+        $sectioninfo = block_side_bar_migrate_old_section($course, 1001);
+
+        // Ensure returned data is what we expect
+        $this->assertTrue(is_object($sectioninfo));
+        $this->assertObjectHasAttribute('id', $sectioninfo);
+        $this->assertObjectHasAttribute('section', $sectioninfo);
+        $this->assertEquals(11, $sectioninfo->section);
+        $this->assertEquals(12, $DB->count_records('course_sections', array('course' => $course->id)));
+
+        // Load the new section record from the DB to make sure the stored values are setup correctly
+        $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
+        $this->validate_sidebar_course_section($sbsection, 11);
+
+        // Setup the course section for the Side Bar block-managed activities
+        $sectioninfo = block_side_bar_migrate_old_section($course, 1000);
+
+        // Ensure returned data is what we expect
+        $this->assertTrue(is_object($sectioninfo));
+        $this->assertObjectHasAttribute('id', $sectioninfo);
+        $this->assertObjectHasAttribute('section', $sectioninfo);
+        $this->assertEquals(12, $sectioninfo->section);
+        $this->assertEquals(12, $DB->count_records('course_sections', array('course' => $course->id)));
+
+        // Load the new section record from the DB to make sure the stored values are setup correctly
+        $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
+        $this->validate_sidebar_course_section($sbsection, 12);
     }
 }

@@ -112,6 +112,7 @@ function block_side_bar_migrate_old_section($course, $sectionnum) {
 
     // Make sure the value we need was actually returned
     if (!isset($formatoptions['numsections'])) {
+        debugging('course format is missing numsections property', DEBUG_DEVELOPER);
         return null;
     }
 
@@ -120,6 +121,7 @@ function block_side_bar_migrate_old_section($course, $sectionnum) {
 
     // Make sure that the legacy section we are supposed to migrate actually exists
     if (!$DB->record_exists('course_sections', array('course' => $course->id, 'section' => $sectionnum))) {
+        debugging('course_section '.$sectionnum.' does not exist in course '.$course->id, DEBUG_DEVELOPER);
         return null;
     }
 
@@ -144,6 +146,7 @@ function block_side_bar_migrate_old_section($course, $sectionnum) {
         if (!empty($orphanedsection->sequence)) {
             // If the section number we would want to "move" this one to is the same, don't do anything
             if ($orphanedsection->section == $sectionend) {
+                $sectionend++;
                 continue;
             }
 
