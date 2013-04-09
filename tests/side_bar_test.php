@@ -89,6 +89,8 @@ class blockSideBarTestcase extends advanced_testcase {
      * @expectedExceptionMessage $course must be an object
      */
     public function test_create_section_invalid_course_parameter_throws_exception_null() {
+        $this->resetAfterTest();
+
         block_side_bar_create_section(null);
     }
 
