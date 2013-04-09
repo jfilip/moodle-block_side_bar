@@ -52,10 +52,13 @@ class blockSideBarTestcase extends advanced_testcase {
      *
      * @param object $section A course_sections record with, at minimum the name, summary, section, and visible properties.
      * @param int $sectionnum The section number that should be present.
+     * @param int $courseid The course record ID that this block belongs to.
      */
-    private function validate_sidebar_course_section($section, $sectionnum) {
+    private function validate_sidebar_course_section($section, $sectionnum, $courseid) {
+        global $CFG;
+
         $this->assertEquals(get_string('sidebar', 'block_side_bar'), $section->name);
-        $this->assertEquals(get_string('sectionsummary', 'block_side_bar'), $section->summary);
+        $this->assertEquals(get_string('sectionsummary', 'block_side_bar', $CFG->wwwroot.'/blocks/side_bar/reset.php?cid='.$courseid), $section->summary);
         $this->assertEquals($sectionnum, $section->section);
         $this->assertEquals(1, $section->visible);
     }
@@ -67,13 +70,13 @@ class blockSideBarTestcase extends advanced_testcase {
      * @param int $sectionnum The section number that should be present.
      */
     private function create_sidebar_course_section($courseid, $sectionnum) {
-        global $DB;
+        global $CFG, $DB;
 
         $dg = $this->getDataGenerator();
         $dg->create_course_section(array('course' => $courseid, 'section' => $sectionnum));
         $section = $DB->get_record('course_sections', array('course' => $courseid, 'section' => $sectionnum), 'id, section, name, visible');
         $section->name          = get_string('sidebar', 'block_side_bar');
-        $section->summary       = get_string('sectionsummary', 'block_side_bar');
+        $section->summary       = get_string('sectionsummary', 'block_side_bar', $CFG->wwwroot.'/blocks/side_bar/reset.php');
         $section->summaryformat = FORMAT_HTML;
         $section->visible       = true;
         $DB->update_record('course_sections', $section);
@@ -146,7 +149,7 @@ class blockSideBarTestcase extends advanced_testcase {
 
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
-        $this->validate_sidebar_course_section($sbsection, 2);
+        $this->validate_sidebar_course_section($sbsection, 2, $course->id);
     }
 
     /**
@@ -179,7 +182,7 @@ class blockSideBarTestcase extends advanced_testcase {
 
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
-        $this->validate_sidebar_course_section($sbsection, 4);
+        $this->validate_sidebar_course_section($sbsection, 4, $course->id);
     }
 
     /**
@@ -211,7 +214,7 @@ class blockSideBarTestcase extends advanced_testcase {
 
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
-        $this->validate_sidebar_course_section($sbsection, 3);
+        $this->validate_sidebar_course_section($sbsection, 3, $course->id);
     }
 
     /**
@@ -245,7 +248,7 @@ class blockSideBarTestcase extends advanced_testcase {
 
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
-        $this->validate_sidebar_course_section($sbsection, 5);
+        $this->validate_sidebar_course_section($sbsection, 5, $course->id);
     }
 
     /**
@@ -279,7 +282,7 @@ class blockSideBarTestcase extends advanced_testcase {
 
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
-        $this->validate_sidebar_course_section($sbsection, 5);
+        $this->validate_sidebar_course_section($sbsection, 5, $course->id);
     }
 
     /**
@@ -376,8 +379,14 @@ class blockSideBarTestcase extends advanced_testcase {
      * Validate that the course section we wish to migrate not existing returns the appropriate result.
      */
     public function test_migrate_old_section_invalid_course_section_returns_null() {
-        $this->resetAfterTest();
+        global $CFG;
+
+        $this->resetAfterTest(true);
         $dg = $this->getDataGenerator();
+
+        if (DEBUG_DEVELOPER == $CFG->debug) {
+            $CFG->debug = DEBUG_NONE;
+        }
 
         $course = $dg->create_course(array('format' => 'topics', 'numsections' => 1));
         $this->assertEquals(null, block_side_bar_migrate_old_section($course, 1000));
@@ -414,7 +423,7 @@ class blockSideBarTestcase extends advanced_testcase {
 
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
-        $this->validate_sidebar_course_section($sbsection, 11);
+        $this->validate_sidebar_course_section($sbsection, 11, $course->id);
     }
 
     /**
@@ -455,7 +464,7 @@ class blockSideBarTestcase extends advanced_testcase {
 
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
-        $this->validate_sidebar_course_section($sbsection, 11);
+        $this->validate_sidebar_course_section($sbsection, 11, $course->id);
     }
 
 
@@ -504,7 +513,7 @@ class blockSideBarTestcase extends advanced_testcase {
 
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
-        $this->validate_sidebar_course_section($sbsection, 20);
+        $this->validate_sidebar_course_section($sbsection, 20, $course->id);
     }
 
     /**
@@ -540,7 +549,7 @@ class blockSideBarTestcase extends advanced_testcase {
 
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
-        $this->validate_sidebar_course_section($sbsection, 11);
+        $this->validate_sidebar_course_section($sbsection, 11, $course->id);
     }
 
     /**
@@ -577,7 +586,7 @@ class blockSideBarTestcase extends advanced_testcase {
 
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
-        $this->validate_sidebar_course_section($sbsection, 11);
+        $this->validate_sidebar_course_section($sbsection, 11, $course->id);
     }
 
     /**
@@ -618,7 +627,7 @@ class blockSideBarTestcase extends advanced_testcase {
 
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
-        $this->validate_sidebar_course_section($sbsection, 11);
+        $this->validate_sidebar_course_section($sbsection, 11, $course->id);
 
         // Setup the course section for the Side Bar block-managed activities
         $sectioninfo = block_side_bar_migrate_old_section($course, 1001);
@@ -632,7 +641,7 @@ class blockSideBarTestcase extends advanced_testcase {
 
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
-        $this->validate_sidebar_course_section($sbsection, 12);
+        $this->validate_sidebar_course_section($sbsection, 12, $course->id);
     }
 
     /**
@@ -668,12 +677,13 @@ class blockSideBarTestcase extends advanced_testcase {
         $this->assertTrue(is_object($sectioninfo));
         $this->assertObjectHasAttribute('id', $sectioninfo);
         $this->assertObjectHasAttribute('section', $sectioninfo);
+
         $this->assertEquals(11, $sectioninfo->section);
         $this->assertEquals(12, $DB->count_records('course_sections', array('course' => $course->id)));
 
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
-        $this->validate_sidebar_course_section($sbsection, 11);
+        $this->validate_sidebar_course_section($sbsection, 11, $course->id);
 
         // Setup the course section for the Side Bar block-managed activities
         $sectioninfo = block_side_bar_migrate_old_section($course, 1000);
@@ -687,6 +697,8 @@ class blockSideBarTestcase extends advanced_testcase {
 
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
-        $this->validate_sidebar_course_section($sbsection, 12);
+        $this->validate_sidebar_course_section($sbsection, 12, $course->id);
     }
 }
+
+// Need to write tests here for block_side_bar_move_section() function in a variety of scenarios

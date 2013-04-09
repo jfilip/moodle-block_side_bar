@@ -15,8 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Allows for arbitrarily adding resources or activities to extra (non-standard) course sections with instance
- * configuration for the block title.
+ * Database upgrade code
  *
  * @package    block_side_bar
  * @author     Justin Filip <jfilip@remote-learner.ca>
@@ -40,6 +39,10 @@ function block_side_bar_upgrade($oldversion = 0) {
             $courses = array();
 
             foreach ($bis as $bi) {
+                if (!$result) {
+                    continue;
+                }
+
                 $blockcfg = unserialize(base64_decode($bi->configdata));
 
                 if (!is_object($blockcfg) && !isset($blockcfg->section) && !isset($blockcfg->section_id)) {
@@ -60,7 +63,22 @@ function block_side_bar_upgrade($oldversion = 0) {
                     $course = $courses[$section->course];
                 }
 
-                $result = $result && block_side_bar_migrate_old_section($course, $section->section);
+                // We've changed some of the values for text within a section and the migration code depends on this so we need to update now
+                $supdate = new stdClass();
+                $supdate->id      = $blockcfg->section_id;
+                $supdate->name    = get_string('sidebar', 'block_side_bar');
+                $supdate->summary = get_string('sectionsummary', 'block_side_bar', $CFG->wwwroot.'/blocks/side_bar/reset.php?cid='.$course->id);
+                $DB->update_record('course_sections', $supdate);
+
+                $sectioninfo = block_side_bar_migrate_old_section($course, $section->section);
+
+                if ($sectioninfo == null) {
+                    $result = false;
+                } else {
+                    // Store the new section number and update the block configuration data
+                    $blockcfg->section = $sectioninfo->section;
+                    $DB->set_field('block_instances', 'configdata', serialize(base64_encode($blockcfg)), array('id' => $bi->id));
+                }
             }
         }
     }

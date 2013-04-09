@@ -33,7 +33,7 @@ defined('MOODLE_INTERNAL') || die();
  * @return object|null An object representing the created section or null on error
  */
 function block_side_bar_create_section($course) {
-    global $DB;
+    global $CFG, $DB;
 
     if (!is_object($course)) {
         throw new coding_exception('$course must be an object');
@@ -71,7 +71,7 @@ function block_side_bar_create_section($course) {
     // Update the Side Bar section with the required values to make it work
     $section = $DB->get_record('course_sections', array('course' => $course->id, 'section' => $sectionnum), 'id, section, name, visible');
     $section->name          = get_string('sidebar', 'block_side_bar');
-    $section->summary       = get_string('sectionsummary', 'block_side_bar');
+    $section->summary       = get_string('sectionsummary', 'block_side_bar', $CFG->wwwroot.'/blocks/side_bar/reset.php?cid='.$course->id);
     $section->summaryformat = FORMAT_HTML;
     $section->visible       = true;
     $DB->update_record('course_sections', $section);
@@ -97,7 +97,7 @@ function block_side_bar_create_section($course) {
  * @return object|null An object representing the created section or null on error
  */
 function block_side_bar_migrate_old_section($course, $sectionnum) {
-    global $DB;
+    global $CFG, $DB;
 
     if (!is_object($course)) {
         throw new coding_exception('$course must be an object');
@@ -126,7 +126,7 @@ function block_side_bar_migrate_old_section($course, $sectionnum) {
     }
 
     // Which sections actually contain orphaned activities?
-    $sql = "SELECT cs.section, cs.id, cs.sequence
+    $sql = "SELECT cs.section, cs.id, cs.name, cs.summary, cs.sequence
               FROM {course_sections} cs
              WHERE cs.course = :courseid
                AND cs.section > :numsections
@@ -147,6 +147,14 @@ function block_side_bar_migrate_old_section($course, $sectionnum) {
             // If the section number we would want to "move" this one to is the same, don't do anything
             if ($orphanedsection->section == $sectionend) {
                 $sectionend++;
+                continue;
+            }
+
+            // If this is a sidebar section then we will skip over it
+            $namematch    = get_string('sidebar', 'block_side_bar') == $orphanedsection->name;
+            $summarymatch = get_string('sectionsummary', 'block_side_bar', $CFG->wwwroot.'/blocks/side_bar/reset.php?cid='.$course->id) == $orphanedsection->summary;
+
+            if ($namematch && $summarymatch) {
                 continue;
             }
 
@@ -190,4 +198,19 @@ function block_side_bar_migrate_old_section($course, $sectionnum) {
     }
 
     return $sectioninfo;
+}
+
+/**
+ * This function is used to move a legacy sidebar course section so that it is the last orphaned section within a cours.
+ * If there are any "filler" sections that have been created between the last real section in the course and this legacy
+ * section they will be deleted unless they contain activities. If they contain activities they will be moved "down" so
+ * that they fall just after the last visible section within the course, with the sidebar section appearing directly
+ * after them.
+ *
+ * @param object $course The course DB record object
+ * @param int $sectionum The section number for the sidebar course section we are migrating
+ * @return object|null An object representing the created section or null on error
+ */
+function block_side_bar_move_section($course, $sectionnum) {
+
 }
