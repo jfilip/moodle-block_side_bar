@@ -267,7 +267,7 @@ class block_side_bar extends block_list {
             INNER JOIN {course_modules} cm ON cm.section = cs.id
             INNER JOIN {modules} mm ON mm.id = cm.module
                  WHERE cs.section = :section
-                   AND cs.course = :course";
+                       AND cs.course = :course";
 
         $params = array(
             'section' => $this->config->section,

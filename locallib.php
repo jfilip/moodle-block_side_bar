@@ -86,7 +86,7 @@ function block_side_bar_create_section($course) {
 
 
 /**
- * This function is used to move a legacy sidebar course section so that it is the last orphaned section within a cours.
+ * This function is used to move a legacy sidebar course section so that it is the last orphaned section within a course.
  * If there are any "filler" sections that have been created between the last real section in the course and this legacy
  * section they will be deleted unless they contain activities. If they contain activities they will be moved "down" so
  * that they fall just after the last visible section within the course, with the sidebar section appearing directly
@@ -129,8 +129,8 @@ function block_side_bar_migrate_old_section($course, $sectionnum) {
     $sql = "SELECT cs.section, cs.id, cs.name, cs.summary, cs.sequence
               FROM {course_sections} cs
              WHERE cs.course = :courseid
-               AND cs.section > :numsections
-               AND cs.section < :sectionnum
+                   AND cs.section > :numsections
+                   AND cs.section < :sectionnum
           ORDER BY cs.section ASC";
 
     $params = array('courseid' => $course->id, 'numsections' => $numsections, 'sectionnum' => $sectionnum);
@@ -201,16 +201,89 @@ function block_side_bar_migrate_old_section($course, $sectionnum) {
 }
 
 /**
- * This function is used to move a legacy sidebar course section so that it is the last orphaned section within a cours.
- * If there are any "filler" sections that have been created between the last real section in the course and this legacy
- * section they will be deleted unless they contain activities. If they contain activities they will be moved "down" so
- * that they fall just after the last visible section within the course, with the sidebar section appearing directly
- * after them.
+ * This function is used to move a visible sidebar course section so that it is an orphaned section within the course.
+ * If there are any other orhpaned sections in the course, the sidebar section will be moved to  appear directly after
+ * them.
  *
  * @param object $course The course DB record object
  * @param int $sectionum The section number for the sidebar course section we are migrating
  * @return object|null An object representing the created section or null on error
  */
 function block_side_bar_move_section($course, $sectionnum) {
+    global $CFG, $DB;
 
+    if (!is_object($course)) {
+        throw new coding_exception('$course must be an object');
+    }
+
+    if (!is_int($sectionnum) || 0 >= $sectionnum) {
+        throw new coding_exception('$sectionnum must be a positive integer');
+    }
+
+    // What is the configured number of sections in this course?
+    $formatoptions = course_get_format($course)->get_format_options();
+
+    // Make sure the value we need was actually returned
+    if (!isset($formatoptions['numsections'])) {
+        debugging('course format is missing numsections property', DEBUG_DEVELOPER);
+        return null;
+    }
+
+    // This is what the maximum section number for this course should be.
+    $numsections = $formatoptions['numsections'];
+
+    // Make sure that the legacy section we are supposed to migrate actually exists
+    if (!$sbsection = $DB->get_record('course_sections', array('course' => $course->id, 'section' => $sectionnum))) {
+        debugging('course_section '.$sectionnum.' does not exist in course '.$course->id, DEBUG_DEVELOPER);
+        return null;
+    }
+
+    // If this is not a sidebar section then we return false
+    $namematch    = get_string('sidebar', 'block_side_bar') == $sbsection->name;
+    $summarymatch = get_string('sectionsummary', 'block_side_bar', $CFG->wwwroot.'/blocks/side_bar/reset.php?cid='.$course->id) == $sbsection->summary;
+
+    if (!$namematch || !$summarymatch) {
+        return null;
+    }
+
+    // If the section we requested to move even visible?
+    if ($sbsection->section > $numsections) {
+        return null;
+    }
+
+    // Copy the section we are moving for usage later
+    $oldsection = clone($sbsection);
+
+    $sql = "SELECT MAX(section)
+              FROM {course_sections}
+             WHERE course = :courseid";
+
+    $newsection = $DB->count_records_sql($sql, array('courseid' => $course->id)) + 1;
+
+    // Move this section to be first non-visible course section
+    $sbsection->section = $newsection;
+    $DB->update_record('course_sections', $sbsection);
+
+    // Shift this section's activities to the new section number
+    $params = array('course' => $course->id, 'section' => $oldsection->section);
+    if ($DB->record_exists('course_modules', $params)) {
+        $DB->set_field('course_modules', 'section', $oldsection->section, $params);
+    }
+
+    $sectioninfo = $DB->get_record('course_sections', array('course' => $course->id, 'section' => $newsection), 'id, section, name, visible');
+    if (false === $sectioninfo) {
+        debugging('could not find section '.$sectionend, DEBUG_DEVELOPER);
+        return null;
+    }
+
+    // And now we have to create a new empty course section to fill in the gap we just created
+    unset($oldsection->id);
+    $oldsection->name = '';
+    $oldsection->summary = '';
+
+    if (false === $DB->insert_record('course_sections', $oldsection, false)) {
+        return null;
+    }
+
+    return $sectioninfo;
 }

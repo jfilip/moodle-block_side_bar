@@ -90,7 +90,6 @@ class blockSideBarTestcase extends advanced_testcase {
      */
     public function test_create_section_invalid_course_parameter_throws_exception_null() {
         $this->resetAfterTest();
-
         block_side_bar_create_section(null);
     }
 
@@ -152,6 +151,9 @@ class blockSideBarTestcase extends advanced_testcase {
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
         $this->validate_sidebar_course_section($sbsection, 2, $course->id);
+
+        // Validate that the activity module was moved as well
+        $this->assertNotEquals(false, get_coursemodule_from_instance('page', $page->id, $course->id, 2));
     }
 
     /**
@@ -185,6 +187,9 @@ class blockSideBarTestcase extends advanced_testcase {
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
         $this->validate_sidebar_course_section($sbsection, 4, $course->id);
+
+        // Validate that the activity module was moved as well
+        $this->assertNotEquals(false, get_coursemodule_from_instance('page', $page->id, $course->id, 4));
     }
 
     /**
@@ -217,6 +222,9 @@ class blockSideBarTestcase extends advanced_testcase {
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
         $this->validate_sidebar_course_section($sbsection, 3, $course->id);
+
+        // Validate that the activity module was moved as well
+        $this->assertNotEquals(false, get_coursemodule_from_instance('page', $page->id, $course->id, 3));
     }
 
     /**
@@ -251,6 +259,9 @@ class blockSideBarTestcase extends advanced_testcase {
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
         $this->validate_sidebar_course_section($sbsection, 5, $course->id);
+
+        // Validate that the activity module was moved as well
+        $this->assertNotEquals(false, get_coursemodule_from_instance('page', $page->id, $course->id, 5));
     }
 
     /**
@@ -391,7 +402,7 @@ class blockSideBarTestcase extends advanced_testcase {
         }
 
         $course = $dg->create_course(array('format' => 'topics', 'numsections' => 1));
-        $this->assertEquals(null, block_side_bar_migrate_old_section($course, 1000));
+        $this->assertNull(block_side_bar_migrate_old_section($course, 1000));
     }
 
     /**
@@ -413,7 +424,7 @@ class blockSideBarTestcase extends advanced_testcase {
 
         $this->create_sidebar_course_section($course->id, 1000);
 
-        // Setup the course section for the Side Bar block-managed activities
+        // Run the migration method
         $sectioninfo = block_side_bar_migrate_old_section($course, 1000);
 
         // Ensure returned data is what we expect
@@ -454,7 +465,7 @@ class blockSideBarTestcase extends advanced_testcase {
         // Create an "old" style sidebar course section
         $this->create_sidebar_course_section($course->id, 1000);
 
-        // Setup the course section for the Side Bar block-managed activities
+        // Run the migration method
         $sectioninfo = block_side_bar_migrate_old_section($course, 1000);
 
         // Ensure returned data is what we expect
@@ -503,7 +514,7 @@ class blockSideBarTestcase extends advanced_testcase {
         $this->create_sidebar_course_section($course->id, 1000);
         $page = $dg->create_module('page', array('course' => $course->id), array('section' => 1000));
 
-        // Setup the course section for the Side Bar block-managed activities
+        // Run the migration method
         $sectioninfo = block_side_bar_migrate_old_section($course, 1000);
 
         // Ensure returned data is what we expect
@@ -516,6 +527,9 @@ class blockSideBarTestcase extends advanced_testcase {
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
         $this->validate_sidebar_course_section($sbsection, 20, $course->id);
+
+        // Validate that the activity module was moved as well
+        $this->assertNotEquals(false, get_coursemodule_from_instance('page', $page->id, $course->id, 20));
     }
 
     /**
@@ -539,7 +553,7 @@ class blockSideBarTestcase extends advanced_testcase {
         // Create a sidebar course section containing an activity module
         $this->create_sidebar_course_section($course->id, 11);
 
-        // Setup the course section for the Side Bar block-managed activities
+        // Run the migration method
         $sectioninfo = block_side_bar_migrate_old_section($course, 11);
 
         // Ensure returned data is what we expect
@@ -576,7 +590,7 @@ class blockSideBarTestcase extends advanced_testcase {
         $this->create_sidebar_course_section($course->id, 11);
         $page = $dg->create_module('page', array('course' => $course->id), array('section' => 11));
 
-        // Setup the course section for the Side Bar block-managed activities
+        // Run the migration method
         $sectioninfo = block_side_bar_migrate_old_section($course, 11);
 
         // Ensure returned data is what we expect
@@ -589,6 +603,9 @@ class blockSideBarTestcase extends advanced_testcase {
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
         $this->validate_sidebar_course_section($sbsection, 11, $course->id);
+
+        // Validate that the activity module was moved as well
+        $this->assertNotEquals(false, get_coursemodule_from_instance('page', $page->id, $course->id, 11));
     }
 
     /**
@@ -611,13 +628,13 @@ class blockSideBarTestcase extends advanced_testcase {
 
         // Create a sidebar course section containing an activity module
         $this->create_sidebar_course_section($course->id, 1000);
-        $page = $dg->create_module('page', array('course' => $course->id), array('section' => 1000));
+        $page1 = $dg->create_module('page', array('course' => $course->id), array('section' => 1000));
 
         // Create an additional sidebar course section containing an activity module
         $this->create_sidebar_course_section($course->id, 1001);
-        $page = $dg->create_module('page', array('course' => $course->id), array('section' => 1001));
+        $page2 = $dg->create_module('page', array('course' => $course->id), array('section' => 1001));
 
-        // Setup the course section for the Side Bar block-managed activities
+        // Run the migration method
         $sectioninfo = block_side_bar_migrate_old_section($course, 1000);
 
         // Ensure returned data is what we expect
@@ -631,7 +648,10 @@ class blockSideBarTestcase extends advanced_testcase {
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
         $this->validate_sidebar_course_section($sbsection, 11, $course->id);
 
-        // Setup the course section for the Side Bar block-managed activities
+        // Validate that the activity module was moved as well
+        $this->assertNotEquals(false, get_coursemodule_from_instance('page', $page1->id, $course->id, 11));
+
+        // Run the migration method
         $sectioninfo = block_side_bar_migrate_old_section($course, 1001);
 
         // Ensure returned data is what we expect
@@ -644,6 +664,9 @@ class blockSideBarTestcase extends advanced_testcase {
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
         $this->validate_sidebar_course_section($sbsection, 12, $course->id);
+
+        // Validate that the activity module was moved as well
+        $this->assertNotEquals(false, get_coursemodule_from_instance('page', $page2->id, $course->id, 11));
     }
 
     /**
@@ -666,13 +689,13 @@ class blockSideBarTestcase extends advanced_testcase {
 
         // Create a sidebar course section containing an activity module
         $this->create_sidebar_course_section($course->id, 1000);
-        $page = $dg->create_module('page', array('course' => $course->id), array('section' => 1000));
+        $page1 = $dg->create_module('page', array('course' => $course->id), array('section' => 1000));
 
         // Create an additional sidebar course section containing an activity module
         $this->create_sidebar_course_section($course->id, 1001);
-        $page = $dg->create_module('page', array('course' => $course->id), array('section' => 1001));
+        $page2 = $dg->create_module('page', array('course' => $course->id), array('section' => 1001));
 
-        // Setup the course section for the Side Bar block-managed activities
+        // Run the migration method
         $sectioninfo = block_side_bar_migrate_old_section($course, 1001);
 
         // Ensure returned data is what we expect
@@ -687,7 +710,10 @@ class blockSideBarTestcase extends advanced_testcase {
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
         $this->validate_sidebar_course_section($sbsection, 11, $course->id);
 
-        // Setup the course section for the Side Bar block-managed activities
+        // Validate that the activity module was moved as well
+        $this->assertNotEquals(false, get_coursemodule_from_instance('page', $page1->id, $course->id, 11));
+
+        // Run the migration method
         $sectioninfo = block_side_bar_migrate_old_section($course, 1000);
 
         // Ensure returned data is what we expect
@@ -700,7 +726,531 @@ class blockSideBarTestcase extends advanced_testcase {
         // Load the new section record from the DB to make sure the stored values are setup correctly
         $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
         $this->validate_sidebar_course_section($sbsection, 12, $course->id);
+
+        // Validate that the activity module was moved as well
+        $this->assertNotEquals(false, get_coursemodule_from_instance('page', $page2->id, $course->id, 12));
+    }
+
+    /**
+     * Validate that passing an invalid $course parameter throws the appropriate exception.
+     *
+     * @expectedException coding_exception
+     * @expectedExceptionMessage $course must be an object
+     */
+    public function test_move_section_invalid_course_parameter_throws_exception_null() {
+        $this->resetAfterTest();
+        block_side_bar_move_section(null, 1);
+    }
+
+    /**
+     * Validate that passing an invalid $course parameter throws the appropriate exception.
+     *
+     * @expectedException coding_exception
+     * @expectedExceptionMessage $course must be an object
+     */
+    public function test_move_section_invalid_course_parameter_throws_exception_int() {
+        block_side_bar_move_section(1, 1);
+    }
+
+    /**
+     * Validate that passing an invalid $course parameter throws the appropriate exception.
+     *
+     * @expectedException coding_exception
+     * @expectedExceptionMessage $course must be an object
+     */
+    public function test_move_section_invalid_course_parameter_throws_exception_string() {
+        block_side_bar_move_section('string', 1);
+    }
+
+    /**
+     * Validate that passing an invalid $course parameter throws the appropriate exception.
+     *
+     * @expectedException coding_exception
+     * @expectedExceptionMessage $course must be an object
+     */
+    public function test_move_section_invalid_course_parameter_throws_exception_array() {
+        block_side_bar_move_section(array(1, 2, 3), 1);
+    }
+
+    /**
+     * Validate that passing an invalid $section parameter throws the appropriate exception.
+     *
+     * @expectedException coding_exception
+     * @expectedExceptionMessage $sectionnum must be a positive integer
+     */
+    public function test_move_section_invalid_section_parameter_throws_exception_null() {
+        block_side_bar_move_section(new stdClass(), null);
+    }
+
+    /**
+     * Validate that passing an invalid $section parameter throws the appropriate exception.
+     *
+     * @expectedException coding_exception
+     * @expectedExceptionMessage $sectionnum must be a positive integer
+     */
+    public function test_move_section_invalid_section_parameter_throws_exception_int_zero() {
+        block_side_bar_move_section(new stdClass(), 0);
+    }
+
+    /**
+     * Validate that passing an invalid $section parameter throws the appropriate exception.
+     *
+     * @expectedException coding_exception
+     * @expectedExceptionMessage $sectionnum must be a positive integer
+     */
+    public function test_move_section_invalid_section_parameter_throws_exception_int_negative() {
+        block_side_bar_move_section(new stdClass(), -1);
+    }
+
+    /**
+     * Validate that passing an invalid $section parameter throws the appropriate exception.
+     *
+     * @expectedException coding_exception
+     * @expectedExceptionMessage $sectionnum must be a positive integer
+     */
+    public function test_move_section_invalid_section_parameter_throws_exception_string() {
+        block_side_bar_move_section(new stdClass(), 'string');
+    }
+
+    /**
+     * Validate that passing an invalid $section parameter throws the appropriate exception.
+     *
+     * @expectedException coding_exception
+     * @expectedExceptionMessage $sectionnum must be a positive integer
+     */
+    public function test_move_section_invalid_section_parameter_throws_exception_array() {
+        block_side_bar_move_section(new stdClass(), array(1, 2, 3));
+    }
+
+    /**
+     * Validate that the course section we wish to migrate not existing returns the appropriate result.
+     */
+    public function test_move_section_invalid_course_section_returns_null() {
+        global $CFG;
+
+        $this->resetAfterTest(true);
+        $dg = $this->getDataGenerator();
+
+        if (DEBUG_DEVELOPER == $CFG->debug) {
+            $CFG->debug = DEBUG_NONE;
+        }
+
+        $course = $dg->create_course(array('format' => 'topics', 'numsections' => 1));
+        $this->assertNull(block_side_bar_move_section($course, 1000));
+    }
+
+    /**
+     * Validate that running the move_section() function on a non-sidebar course section has no effect
+     */
+    public function test_move_section_non_sidebar_section_returns_null() {
+        global $DB;
+
+        $this->resetAfterTest();
+        $dg = $this->getDataGenerator();
+
+        // Create test course data
+        $course = $dg->create_course(array('format' => 'topics', 'numsections' => 10));
+
+        // Create the main course sections for this course (section 1 is already created above).
+        for ($i = 2; $i <= 10; $i++) {
+            $dg->create_course_section(array('course' => $course->id, 'section' => $i));
+        }
+
+        // Attempt to "move" the section to be not visible
+        $this->assertNull(block_side_bar_move_section($course, 10));
+    }
+
+    /**
+     * Validate that running the move_section() function with a sidebar section that is already not visible does nothing.
+     */
+    public function test_move_section_single_not_visible_returns_null() {
+        global $DB;
+
+        $this->resetAfterTest();
+        $dg = $this->getDataGenerator();
+
+        // Create test course data
+        $course = $dg->create_course(array('format' => 'topics', 'numsections' => 10));
+
+        // Create the main course sections for this course (section 1 is already created above).
+        for ($i = 2; $i <= 10; $i++) {
+            $dg->create_course_section(array('course' => $course->id, 'section' => $i));
+        }
+
+        // Create a sidebar course section
+        $this->create_sidebar_course_section($course->id, 11);
+
+        // Attempt to "move" the section to be not visible
+        $this->assertNull(block_side_bar_move_section($course, 11));
+    }
+
+    /**
+     * Validate that running the move_section() function with a single sidebar section as the last visible course section
+     * moves the section "down" one step to be the first (and only) non-visible course section.
+     */
+    public function test_move_section_single_one_up_empty() {
+        global $DB;
+
+        $this->resetAfterTest();
+        $dg = $this->getDataGenerator();
+
+        // Create test course data
+        $course = $dg->create_course(array('format' => 'topics', 'numsections' => 10));
+
+        // Create the main course sections for this course (section 1 is already created above).
+        for ($i = 2; $i <= 9; $i++) {
+            $dg->create_course_section(array('course' => $course->id, 'section' => $i));
+        }
+
+        // Create an empty sidebar course section
+        $this->create_sidebar_course_section($course->id, 10);
+
+        // Attempt to "move" the section to be not visible
+        $sectioninfo = block_side_bar_move_section($course, 10);
+
+        // Ensure returned data is what we expect
+        $this->assertTrue(is_object($sectioninfo));
+        $this->assertObjectHasAttribute('id', $sectioninfo);
+        $this->assertObjectHasAttribute('section', $sectioninfo);
+
+        $this->assertEquals(11, $sectioninfo->section);
+        $this->assertEquals(11, $DB->count_records('course_sections', array('course' => $course->id)));
+
+        // Load the new section record from the DB to make sure the stored values are setup correctly
+        $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
+        $this->validate_sidebar_course_section($sbsection, 11, $course->id);
+    }
+
+    /**
+     * Validate that running the move_section() function with a single sidebar section as the second-last visible course
+     * section moves the section "down" two steps to be the first (and only) non-visible course section.
+     */
+    public function test_move_section_single_two_up_empty() {
+        global $DB;
+
+        $this->resetAfterTest();
+        $dg = $this->getDataGenerator();
+
+        // Create test course data
+        $course = $dg->create_course(array('format' => 'topics', 'numsections' => 10));
+
+        // Create the main course sections for this course (section 1 is already created above).
+        for ($i = 2; $i <= 8; $i++) {
+            $dg->create_course_section(array('course' => $course->id, 'section' => $i));
+        }
+
+        // Create an empty sidebar course section
+        $this->create_sidebar_course_section($course->id, 9);
+
+        // Create the remaining standard course section
+        $dg->create_course_section(array('course' => $course->id, 'section' => 10));
+
+        // Attempt to "move" the section to be not visible
+        $sectioninfo = block_side_bar_move_section($course, 9);
+
+        // Ensure returned data is what we expect
+        $this->assertTrue(is_object($sectioninfo));
+        $this->assertObjectHasAttribute('id', $sectioninfo);
+        $this->assertObjectHasAttribute('section', $sectioninfo);
+
+        $this->assertEquals(11, $sectioninfo->section);
+        $this->assertEquals(11, $DB->count_records('course_sections', array('course' => $course->id)));
+
+        // Load the new section record from the DB to make sure the stored values are setup correctly
+        $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
+        $this->validate_sidebar_course_section($sbsection, 11, $course->id);
+    }
+
+    /**
+     * Validate that running the move_section() function with two sidebar sections as the second last and last visible
+     * course sections works correctly on each section: only moving that specific section into the invisible area and not
+     * both at the same time.
+     */
+    public function test_move_section_double_empty() {
+        global $DB;
+
+        $this->resetAfterTest();
+        $dg = $this->getDataGenerator();
+
+        // Create test course data
+        $course = $dg->create_course(array('format' => 'topics', 'numsections' => 10));
+
+        // Create the main course sections for this course (section 1 is already created above).
+        for ($i = 2; $i <= 8; $i++) {
+            $dg->create_course_section(array('course' => $course->id, 'section' => $i));
+        }
+
+        // Create a coupke empty sidebar course sections
+        $this->create_sidebar_course_section($course->id, 9);
+        $this->create_sidebar_course_section($course->id, 10);
+
+        // Attempt to "move" the first section to be not visible
+        $sectioninfo = block_side_bar_move_section($course, 9);
+
+        // Ensure returned data is what we expect
+        $this->assertTrue(is_object($sectioninfo));
+        $this->assertObjectHasAttribute('id', $sectioninfo);
+        $this->assertObjectHasAttribute('section', $sectioninfo);
+
+        $this->assertEquals(11, $sectioninfo->section);
+        $this->assertEquals(11, $DB->count_records('course_sections', array('course' => $course->id)));
+
+        // Load the new section record from the DB to make sure the stored values are setup correctly
+        $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
+        $this->validate_sidebar_course_section($sbsection, 11, $course->id);
+
+        // Attempt to "move" the second section to be not visible
+        $sectioninfo = block_side_bar_move_section($course, 10);
+
+        // Ensure returned data is what we expect
+        $this->assertTrue(is_object($sectioninfo));
+        $this->assertObjectHasAttribute('id', $sectioninfo);
+        $this->assertObjectHasAttribute('section', $sectioninfo);
+
+        $this->assertEquals(12, $sectioninfo->section);
+        $this->assertEquals(12, $DB->count_records('course_sections', array('course' => $course->id)));
+
+        // Load the new section record from the DB to make sure the stored values are setup correctly
+        $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
+        $this->validate_sidebar_course_section($sbsection, 12, $course->id);
+    }
+
+    /**
+     * Validate that running the move_section() function with a single sidebar section as the last visible course section
+     * with already existing orphaned sections moves the sidebar section "down" to be the last non-visible course section.
+     */
+    public function test_move_section_single_one_up_with_filler_empty() {
+        global $DB;
+
+        $this->resetAfterTest();
+        $dg = $this->getDataGenerator();
+
+        // Create test course data
+        $course = $dg->create_course(array('format' => 'topics', 'numsections' => 10));
+
+        // Create the main course sections for this course (section 1 is already created above).
+        for ($i = 2; $i <= 9; $i++) {
+            $dg->create_course_section(array('course' => $course->id, 'section' => $i));
+        }
+
+        // Create an empty sidebar course section
+        $this->create_sidebar_course_section($course->id, 10);
+
+        $dg->create_course_section(array('course' => $course->id, 'section' => 11));
+        $dg->create_course_section(array('course' => $course->id, 'section' => 12));
+
+        // Attempt to "move" the section to be not visible
+        $sectioninfo = block_side_bar_move_section($course, 10);
+
+        // Ensure returned data is what we expect
+        $this->assertTrue(is_object($sectioninfo));
+        $this->assertObjectHasAttribute('id', $sectioninfo);
+        $this->assertObjectHasAttribute('section', $sectioninfo);
+
+        $this->assertEquals(13, $sectioninfo->section);
+        $this->assertEquals(13, $DB->count_records('course_sections', array('course' => $course->id)));
+
+        // Load the new section record from the DB to make sure the stored values are setup correctly
+        $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
+        $this->validate_sidebar_course_section($sbsection, 13, $course->id);
+    }
+
+    /**
+     * Validate that running the move_section() function with a single sidebar section as the last visible course section
+     * moves the section "down" one step to be the first (and only) non-visible course section.
+     */
+    public function test_move_section_single_one_up_non_empty() {
+        global $DB;
+
+        $this->resetAfterTest();
+        $dg = $this->getDataGenerator();
+
+        // Create test course data
+        $course = $dg->create_course(array('format' => 'topics', 'numsections' => 10));
+
+        // Create the main course sections for this course (section 1 is already created above).
+        for ($i = 2; $i <= 9; $i++) {
+            $dg->create_course_section(array('course' => $course->id, 'section' => $i));
+        }
+
+        // Create an empty sidebar course section
+        $this->create_sidebar_course_section($course->id, 10);
+        $page = $dg->create_module('page', array('course' => $course->id), array('section' => 10));
+
+        // Attempt to "move" the section to be not visible
+        $sectioninfo = block_side_bar_move_section($course, 10);
+
+        // Ensure returned data is what we expect
+        $this->assertTrue(is_object($sectioninfo));
+        $this->assertObjectHasAttribute('id', $sectioninfo);
+        $this->assertObjectHasAttribute('section', $sectioninfo);
+
+        $this->assertEquals(11, $sectioninfo->section);
+        $this->assertEquals(11, $DB->count_records('course_sections', array('course' => $course->id)));
+
+        // Load the new section record from the DB to make sure the stored values are setup correctly
+        $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
+        $this->validate_sidebar_course_section($sbsection, 11, $course->id);
+
+        // Validate that the activity module was moved as well
+        $this->assertNotEquals(false, get_coursemodule_from_instance('page', $page->id, $course->id, 11));
+    }
+
+    /**
+     * Validate that running the move_section() function with a single sidebar section as the second-last visible course
+     * section moves the section "down" two steps to be the first (and only) non-visible course section.
+     */
+    public function test_move_section_single_two_up_non_empty() {
+        global $DB;
+
+        $this->resetAfterTest();
+        $dg = $this->getDataGenerator();
+
+        // Create test course data
+        $course = $dg->create_course(array('format' => 'topics', 'numsections' => 10));
+
+        // Create the main course sections for this course (section 1 is already created above).
+        for ($i = 2; $i <= 8; $i++) {
+            $dg->create_course_section(array('course' => $course->id, 'section' => $i));
+        }
+
+        // Create an empty sidebar course section
+        $this->create_sidebar_course_section($course->id, 9);
+        $page = $dg->create_module('page', array('course' => $course->id), array('section' => 9));
+
+        // Create the remaining standard course section
+        $dg->create_course_section(array('course' => $course->id, 'section' => 10));
+
+        // Attempt to "move" the section to be not visible
+        $sectioninfo = block_side_bar_move_section($course, 9);
+
+        // Ensure returned data is what we expect
+        $this->assertTrue(is_object($sectioninfo));
+        $this->assertObjectHasAttribute('id', $sectioninfo);
+        $this->assertObjectHasAttribute('section', $sectioninfo);
+
+        $this->assertEquals(11, $sectioninfo->section);
+        $this->assertEquals(11, $DB->count_records('course_sections', array('course' => $course->id)));
+
+        // Load the new section record from the DB to make sure the stored values are setup correctly
+        $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
+        $this->validate_sidebar_course_section($sbsection, 11, $course->id);
+
+        // Validate that the activity module was moved as well
+        $this->assertNotEquals(false, get_coursemodule_from_instance('page', $page->id, $course->id, 11));
+    }
+
+    /**
+     * Validate that running the move_section() function with two sidebar sections as the second last and last visible
+     * course sections works correctly on each section: only moving that specific section into the invisible area and not
+     * both at the same time.
+     */
+    public function test_move_section_double_non_empty() {
+        global $DB;
+
+        $this->resetAfterTest();
+        $dg = $this->getDataGenerator();
+
+        // Create test course data
+        $course = $dg->create_course(array('format' => 'topics', 'numsections' => 10));
+
+        // Create the main course sections for this course (section 1 is already created above).
+        for ($i = 2; $i <= 8; $i++) {
+            $dg->create_course_section(array('course' => $course->id, 'section' => $i));
+        }
+
+        // Create a coupke empty sidebar course sections
+        $this->create_sidebar_course_section($course->id, 9);
+        $page1 = $dg->create_module('page', array('course' => $course->id), array('section' => 9));
+
+        $this->create_sidebar_course_section($course->id, 10);
+        $page2 = $dg->create_module('page', array('course' => $course->id), array('section' => 10));
+
+        // Attempt to "move" the first section to be not visible
+        $sectioninfo = block_side_bar_move_section($course, 9);
+
+        // Ensure returned data is what we expect
+        $this->assertTrue(is_object($sectioninfo));
+        $this->assertObjectHasAttribute('id', $sectioninfo);
+        $this->assertObjectHasAttribute('section', $sectioninfo);
+
+        $this->assertEquals(11, $sectioninfo->section);
+        $this->assertEquals(11, $DB->count_records('course_sections', array('course' => $course->id)));
+
+        // Load the new section record from the DB to make sure the stored values are setup correctly
+        $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
+        $this->validate_sidebar_course_section($sbsection, 11, $course->id);
+
+        // Validate that the activity module was moved as well
+        $this->assertNotEquals(false, get_coursemodule_from_instance('page', $page1->id, $course->id, 11));
+
+        // Attempt to "move" the second section to be not visible
+        $sectioninfo = block_side_bar_move_section($course, 10);
+
+        // Ensure returned data is what we expect
+        $this->assertTrue(is_object($sectioninfo));
+        $this->assertObjectHasAttribute('id', $sectioninfo);
+        $this->assertObjectHasAttribute('section', $sectioninfo);
+
+        $this->assertEquals(12, $sectioninfo->section);
+        $this->assertEquals(12, $DB->count_records('course_sections', array('course' => $course->id)));
+
+        // Load the new section record from the DB to make sure the stored values are setup correctly
+        $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
+        $this->validate_sidebar_course_section($sbsection, 12, $course->id);
+
+        // Validate that the activity module was moved as well
+        $this->assertNotEquals(false, get_coursemodule_from_instance('page', $page1->id, $course->id, 12));
+    }
+
+    /**
+     * Validate that running the move_section() function with a single sidebar section as the last visible course section
+     * with already existing orphaned sections moves the sidebar section "down" to be the last non-visible course section.
+     */
+    public function test_move_section_single_one_up_with_filler_non_empty() {
+        global $DB;
+
+        $this->resetAfterTest();
+        $dg = $this->getDataGenerator();
+
+        // Create test course data
+        $course = $dg->create_course(array('format' => 'topics', 'numsections' => 10));
+
+        // Create the main course sections for this course (section 1 is already created above).
+        for ($i = 2; $i <= 9; $i++) {
+            $dg->create_course_section(array('course' => $course->id, 'section' => $i));
+        }
+
+        // Create an empty sidebar course section
+        $this->create_sidebar_course_section($course->id, 10);
+        $page1 = $dg->create_module('page', array('course' => $course->id), array('section' => 10));
+
+        $dg->create_course_section(array('course' => $course->id, 'section' => 11));
+        $page2 = $dg->create_module('page', array('course' => $course->id), array('section' => 11));
+
+        $dg->create_course_section(array('course' => $course->id, 'section' => 12));
+        $page3 = $dg->create_module('page', array('course' => $course->id), array('section' => 12));
+
+        // Attempt to "move" the section to be not visible
+        $sectioninfo = block_side_bar_move_section($course, 10);
+
+        // Ensure returned data is what we expect
+        $this->assertTrue(is_object($sectioninfo));
+        $this->assertObjectHasAttribute('id', $sectioninfo);
+        $this->assertObjectHasAttribute('section', $sectioninfo);
+
+        $this->assertEquals(13, $sectioninfo->section);
+        $this->assertEquals(13, $DB->count_records('course_sections', array('course' => $course->id)));
+
+        // Load the new section record from the DB to make sure the stored values are setup correctly
+        $sbsection = $DB->get_record('course_sections', array('id' => $sectioninfo->id), 'section, name, summary, visible');
+        $this->validate_sidebar_course_section($sbsection, 13, $course->id);
+
+        // Validate that the activity module was moved as well
+        $this->assertNotEquals(false, get_coursemodule_from_instance('page', $page1->id, $course->id, 13));
+
+        // Validate that the activities in the pre-existing orhpaned course sections were not moved
+        $this->assertNotEquals(false, get_coursemodule_from_instance('page', $page2->id, $course->id, 11));
+        $this->assertNotEquals(false, get_coursemodule_from_instance('page', $page3->id, $course->id, 12));
     }
 }
-
-// Need to write tests here for block_side_bar_move_section() function in a variety of scenarios
