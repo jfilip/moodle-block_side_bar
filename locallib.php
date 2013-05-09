@@ -55,8 +55,8 @@ function block_side_bar_create_section($course) {
 
     // Check if there are already any "orphaned" sections in this course
     $sql = "SELECT MAX(section)
-            FROM {course_sections}
-            WHERE course = :courseid";
+              FROM {course_sections}
+             WHERE course = :courseid";
 
     $maxsection = $DB->get_field_sql($sql, array('courseid' => $course->id));
 
@@ -67,14 +67,17 @@ function block_side_bar_create_section($course) {
 
     // Just make sure that our section actually exists
     course_create_sections_if_missing($course->id, $sectionnum);
+    rebuild_course_cache($course->id);
 
     // Update the Side Bar section with the required values to make it work
+    $reseturl = new moodle_url('/blocks/side_bar/reset.php?cid='.$course->id);
     $section = $DB->get_record('course_sections', array('course' => $course->id, 'section' => $sectionnum), 'id, section, name, visible');
     $section->name          = get_string('sidebar', 'block_side_bar');
-    $section->summary       = get_string('sectionsummary', 'block_side_bar', $CFG->wwwroot.'/blocks/side_bar/reset.php?cid='.$course->id);
+    $section->summary       = get_string('sectionsummary', 'block_side_bar', (string)html_writer::link($reseturl, $reseturl));
     $section->summaryformat = FORMAT_HTML;
     $section->visible       = true;
     $DB->update_record('course_sections', $section);
+
     rebuild_course_cache($course->id, true);
 
     $sectioninfo = new stdClass();
@@ -151,8 +154,9 @@ function block_side_bar_migrate_old_section($course, $sectionnum) {
             }
 
             // If this is a sidebar section then we will skip over it
+            $reseturl = new moodle_url('/blocks/side_bar/reset.php?cid='.$course->id);
             $namematch    = get_string('sidebar', 'block_side_bar') == $orphanedsection->name;
-            $summarymatch = get_string('sectionsummary', 'block_side_bar', $CFG->wwwroot.'/blocks/side_bar/reset.php?cid='.$course->id) == $orphanedsection->summary;
+            $summarymatch = get_string('sectionsummary', 'block_side_bar', (string)html_writer::link($reseturl, $reseturl)) == $orphanedsection->summary;
 
             if ($namematch && $summarymatch) {
                 continue;
@@ -181,7 +185,7 @@ function block_side_bar_migrate_old_section($course, $sectionnum) {
         }
     }
 
-    // Finally, we will move our section into the new "bottom" section position
+    // Finally, we will move our section into the new "bottom" section position (only if it needs moving)
     $params = array('course' => $course->id, 'section' => $sectionnum);
     $DB->set_field('course_sections', 'section', $sectionend, $params);
     if ($DB->record_exists('course_modules', $params)) {
@@ -216,7 +220,7 @@ function block_side_bar_move_section($course, $sectionnum) {
         throw new coding_exception('$course must be an object');
     }
 
-    if (!is_int($sectionnum) || 0 >= $sectionnum) {
+    if (!is_int($sectionnum) || $sectionnum <= 0) {
         throw new coding_exception('$sectionnum must be a positive integer');
     }
 
@@ -239,8 +243,9 @@ function block_side_bar_move_section($course, $sectionnum) {
     }
 
     // If this is not a sidebar section then we return false
+    $reseturl = new moodle_url('/blocks/side_bar/reset.php?cid='.$course->id);
     $namematch    = get_string('sidebar', 'block_side_bar') == $sbsection->name;
-    $summarymatch = get_string('sectionsummary', 'block_side_bar', $CFG->wwwroot.'/blocks/side_bar/reset.php?cid='.$course->id) == $sbsection->summary;
+    $summarymatch = get_string('sectionsummary', 'block_side_bar', (string)html_writer::link($reseturl, $reseturl)) == $sbsection->summary;
 
     if (!$namematch || !$summarymatch) {
         return null;
@@ -270,6 +275,8 @@ function block_side_bar_move_section($course, $sectionnum) {
         $DB->set_field('course_modules', 'section', $oldsection->section, $params);
     }
 
+    rebuild_course_cache($course->id);
+
     $sectioninfo = $DB->get_record('course_sections', array('course' => $course->id, 'section' => $newsection), 'id, section, name, visible');
     if (false === $sectioninfo) {
         debugging('could not find section '.$sectionend, DEBUG_DEVELOPER);
@@ -280,10 +287,13 @@ function block_side_bar_move_section($course, $sectionnum) {
     unset($oldsection->id);
     $oldsection->name = '';
     $oldsection->summary = '';
+    $oldsection->sequence = '';
 
     if (false === $DB->insert_record('course_sections', $oldsection, false)) {
         return null;
     }
+
+    rebuild_course_cache($course->id, true);
 
     return $sectioninfo;
 }

@@ -28,15 +28,11 @@
 defined('MOODLE_INTERNAL') || die();
 
 class block_side_bar extends block_list {
+    /**
+     * Setup the title for this block
+     */
     public function init() {
-        global $CFG;
-
         $this->title = get_string('pluginname', 'block_side_bar');
-
-        // Make sure the global section start value is set.
-        if (!isset($CFG->block_side_bar_section_start)) {
-            set_config('block_side_bar_section_start', 1000);
-        }
     }
 
     /**
@@ -74,8 +70,6 @@ class block_side_bar extends block_list {
         require_once($CFG->dirroot.'/course/lib.php');
         $context   = context_course::instance($course->id);
         $isediting = $this->page->user_is_editing() && has_capability('moodle/course:manageactivities', $context);
-
-        $section_start = $CFG->block_side_bar_section_start;
 
         // Create a new section for this block (if necessary).
         if (empty($this->config->section)) {
@@ -294,34 +288,6 @@ class block_side_bar extends block_list {
         $DB->delete_records('course_sections_avail_fields', array('coursesectionid' => $this->config->section_id));
         $DB->delete_records('course_sections', array('id' => $this->config->section_id));
         rebuild_course_cache($this->page->course->id, true);
-
-        // if (!$section = $DB->get_record('course_sections', $params)) {
-        //  return true;
-        // }
-
-        // if ($modules = $DB->get_recordset('course_modules', array('section' => $section->id))) {
-        //  $mods = array();
-
-        //  foreach($modules as $module) {
-        //      $modid = $module->module;
-
-        //      if (!isset($mods[$modid])) {
-        //          $mods[$modid] = $DB->get_field('modules', 'name', array('id' => $modid));
-        //      }
-
-        //      $mod_lib = $CFG->dirroot.'/mod/'.$mods[$modid].'/lib.php';
-
-        //      if (file_exists($mod_lib)) {
-        //          require_once($mod_lib);
-
-        //          $delete_func = $mods[$modid].'_delete_instance';
-
-        //          if (function_exists($delete_func)) {
-        //              $delete_func($module->instance);
-        //          }
-        //      }
-        //  }
-        // }
     }
 
     /**
@@ -341,7 +307,7 @@ class block_side_bar extends block_list {
      * @return bool
      */
     public function has_config() {
-        return true;
+        return false;
     }
 
     /**

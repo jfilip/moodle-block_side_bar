@@ -25,15 +25,17 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-function block_side_bar_upgrade($oldversion = 0) {
+function xmldb_block_side_bar_upgrade($oldversion = 0) {
     global $CFG, $DB;
 
     $result = true;
 
-    if ($oldersion < 2012062500) {
+    if ($oldversion < 2012062500) {
+        require_once($CFG->dirroot.'/blocks/side_bar/locallib.php');
+
         // Fetch all block instances which have saved configuration data
-        $select = "blockname = 'side_bar' AND ".sql_isnotempty('block_instances', 'configdata', true, true);
-        if ($bis = $DB->$DB->get_recordset_select('block_instances', $select, '', 'id, configdata') {
+        $select = "blockname = 'side_bar' AND ".$DB->sql_isnotempty('block_instances', 'configdata', true, true);
+        if ($bis = $DB->get_recordset_select('block_instances', $select, array(), 'id, configdata')) {
             // Perform a semi-cache of course records so we're not constantly fetching course records from the DB when multiple
             // block instances are found within a single course.
             $courses = array();
@@ -45,7 +47,7 @@ function block_side_bar_upgrade($oldversion = 0) {
 
                 $blockcfg = unserialize(base64_decode($bi->configdata));
 
-                if (!is_object($blockcfg) && !isset($blockcfg->section) && !isset($blockcfg->section_id)) {
+                if ((!is_object($blockcfg) && !isset($blockcfg->section) && !isset($blockcfg->section_id))) {
                     continue;
                 }
 
@@ -64,23 +66,27 @@ function block_side_bar_upgrade($oldversion = 0) {
                 }
 
                 // We've changed some of the values for text within a section and the migration code depends on this so we need to update now
+                $reseturl = new moodle_url('/blocks/side_bar/reset.php?cid='.$course->id);
+
                 $supdate = new stdClass();
                 $supdate->id      = $blockcfg->section_id;
                 $supdate->name    = get_string('sidebar', 'block_side_bar');
-                $supdate->summary = get_string('sectionsummary', 'block_side_bar', $CFG->wwwroot.'/blocks/side_bar/reset.php?cid='.$course->id);
+                $supdate->summary = get_string('sectionsummary', 'block_side_bar', (string)html_writer::link($reseturl, $reseturl));
                 $DB->update_record('course_sections', $supdate);
 
-                $sectioninfo = block_side_bar_migrate_old_section($course, $section->section);
+                $sectioninfo = block_side_bar_migrate_old_section($course, (int)$section->section);
 
                 if ($sectioninfo == null) {
                     $result = false;
                 } else {
                     // Store the new section number and update the block configuration data
                     $blockcfg->section = $sectioninfo->section;
-                    $DB->set_field('block_instances', 'configdata', serialize(base64_encode($blockcfg)), array('id' => $bi->id));
+                    $DB->set_field('block_instances', 'configdata', base64_encode(serialize($blockcfg)), array('id' => $bi->id));
                 }
             }
         }
+
+        upgrade_plugin_savepoint($result, 2012062500, 'block', 'side_bar');
     }
 
     return $result;

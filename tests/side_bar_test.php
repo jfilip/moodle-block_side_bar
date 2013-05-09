@@ -57,8 +57,9 @@ class blockSideBarTestcase extends advanced_testcase {
     private function validate_sidebar_course_section($section, $sectionnum, $courseid) {
         global $CFG;
 
+        $reseturl = new moodle_url('/blocks/side_bar/reset.php?cid='.$courseid);
         $this->assertEquals(get_string('sidebar', 'block_side_bar'), $section->name);
-        $this->assertEquals(get_string('sectionsummary', 'block_side_bar', $CFG->wwwroot.'/blocks/side_bar/reset.php?cid='.$courseid), $section->summary);
+        $this->assertEquals(get_string('sectionsummary', 'block_side_bar', (string)html_writer::link($reseturl, $reseturl)), $section->summary);
         $this->assertEquals($sectionnum, $section->section);
         $this->assertEquals(1, $section->visible);
     }
@@ -74,9 +75,12 @@ class blockSideBarTestcase extends advanced_testcase {
 
         $dg = $this->getDataGenerator();
         $dg->create_course_section(array('course' => $courseid, 'section' => $sectionnum));
+
+        $reseturl = new moodle_url('/blocks/side_bar/reset.php?cid='.$courseid);
+
         $section = $DB->get_record('course_sections', array('course' => $courseid, 'section' => $sectionnum), 'id, section, name, visible');
         $section->name          = get_string('sidebar', 'block_side_bar');
-        $section->summary       = get_string('sectionsummary', 'block_side_bar', $CFG->wwwroot.'/blocks/side_bar/reset.php');
+        $section->summary       = get_string('sectionsummary', 'block_side_bar', (string)html_writer::link($reseturl, $reseturl));
         $section->summaryformat = FORMAT_HTML;
         $section->visible       = true;
         $DB->update_record('course_sections', $section);

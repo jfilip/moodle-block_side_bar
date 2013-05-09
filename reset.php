@@ -23,19 +23,24 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+require_once(dirname(__FILE__).'/../../config.php');
+require_once(dirname(__FILE__).'/locallib.php');
+
 $cid = required_param('cid', PARAM_INT);
 
 require_login($cid, false);
 
-$course = $DB->get_record('course', $params, '*', MUST_EXIST);
-$context = contet_course::instance($course->id);
+$course = $DB->get_record('course', array('id' => $cid), '*', MUST_EXIST);
+$context = context_course::instance($course->id);
 
 require_capability('moodle/course:manageactivities', $context);
 
 // Fetch all block instances which have saved configuration data
-$select = "parentcontextid = :ctxid AND blockname = 'side_bar' AND ".sql_isnotempty('block_instances', 'configdata', true, true);
-if ($bis = $DB->$DB->get_recordset_select('block_instances', $select, array('ctxid' => $context->id), 'id, configdata') {
+$select = "parentcontextid = :ctxid AND blockname = 'side_bar' AND ".$DB->sql_isnotempty('block_instances', 'configdata', true, true);
+if ($bis = $DB->get_recordset_select('block_instances', $select, array('ctxid' => $context->id), 'id, configdata')) {
     foreach ($bis as $bi) {
+        $blockcfg = unserialize(base64_decode($bi->configdata));
+
         if (!is_object($blockcfg) && !isset($blockcfg->section) && !isset($blockcfg->section_id)) {
             continue;
         }
@@ -44,12 +49,15 @@ if ($bis = $DB->$DB->get_recordset_select('block_instances', $select, array('ctx
             continue;
         }
 
-        $sectioninfo = block_side_bar_move_section($course, $section->section);
+        $sectioninfo = block_side_bar_move_section($course, (int)$section->section);
 
-        if ($sectioninfo == null) {
-            $result = false;
-        } else {
+        if ($sectioninfo != null) {
+            // Store the new section number and update the block configuration data
             $blockcfg->section = $sectioninfo->section;
+            $DB->set_field('block_instances', 'configdata', base64_encode(serialize($blockcfg)), array('id' => $bi->id));
         }
     }
 }
+
+// We're done, so head back to the course
+redirect(new moodle_url('/course/view.php?id='.$course->id));
