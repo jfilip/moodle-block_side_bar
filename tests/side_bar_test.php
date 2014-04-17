@@ -451,8 +451,9 @@ class blockSideBarTestcase extends advanced_testcase {
     public function test_migrate_old_section_with_empty_filler() {
         global $DB;
 
-        if (!defined('PHPUNIT_LONGTEST') || PHPUNIT_LONGTEST != true) {
-            $this->markTestSkipped('Set PHPUNIT_LONGTEST to true to execute this test');
+        if (!PHPUNIT_LONGTEST) {
+            // This test is a long one, only run if allowed.
+            return;
         }
 
         $this->resetAfterTest();
@@ -494,8 +495,9 @@ class blockSideBarTestcase extends advanced_testcase {
     public function test_migrate_old_section_with_nonempty_filler() {
         global $DB;
 
-        if (!defined('PHPUNIT_LONGTEST') || PHPUNIT_LONGTEST != true) {
-            $this->markTestSkipped('Set PHPUNIT_LONGTEST to true to execute this test');
+        if (!PHPUNIT_LONGTEST) {
+            // This test is a long one, only run if allowed.
+            return;
         }
 
         $this->resetAfterTest();
