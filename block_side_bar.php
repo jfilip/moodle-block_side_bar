@@ -125,7 +125,8 @@ class block_side_bar extends block_list {
                         continue;
                     }
 
-                    list($content, $instancename) = get_print_section_cm_text($cm, $course);
+                    $content = $cm->get_formatted_content(array('overflowdiv' => true, 'noclean' => true));
+                    $instancename = $cm->get_formatted_name();
 
                     if (!($url = $cm->get_url())) {
                         $this->content->items[] = $content;
@@ -135,7 +136,7 @@ class block_side_bar extends block_list {
                         // Accessibility: incidental image - should be empty Alt text
                         $icon = '<img src="'.$cm->get_icon_url().'" class="icon" alt="" />&nbsp;';
                         $this->content->items[] = '<a title="'.$cm->modplural.'" '.$linkcss.' '.$cm->extra.' href="'.
-                                                  $url.'">'.$icon.$instancename.'</a>';
+                                $url.'">'.$icon.$instancename.'</a>';
                     }
                 }
             }
@@ -144,6 +145,7 @@ class block_side_bar extends block_list {
         }
 
         // slow & hacky editing mode
+        $courserenderer = $this->page->get_renderer('core', 'course');
         $ismoving = ismoving($course->id);
 
         if (!$cs = $DB->get_record('course_sections', array('section' => $this->config->section, 'course' => $course->id))) {
@@ -170,9 +172,9 @@ class block_side_bar extends block_list {
         $editbuttons = '';
 
         if ($ismoving) {
-            $this->content->icons[] = '<img src="'.$OUTPUT->pix_url('t/move').'" class="iconsmall" alt="" />';
-            $this->content->items[] = $USER->activitycopyname.'&nbsp;(<a href="'.$CFG->wwwroot.'/course/mod.php?'.
-                                      'cancelcopy=true&amp;sesskey='.sesskey().'">'.$strcancel.'</a>)';
+            $this->content->icons[] = '<img src="'.$OUTPUT->pix_url('t/move') . '" class="iconsmall" alt="" />';
+            $this->content->items[] = $USER->activitycopyname.'&nbsp;(<a href="'.$CFG->wwwroot.
+                    '/course/mod.php?cancelcopy=true&amp;sesskey='.sesskey().'">'.$strcancel.'</a>)';
         }
 
         if (!empty($modinfo->sections[$this->config->section])) {
@@ -184,15 +186,9 @@ class block_side_bar extends block_list {
                 }
 
                 if (!$ismoving) {
-                    if ($groupbuttons) {
-                        if (! $mod->groupmodelink = $groupbuttonslink) {
-                            $mod->groupmode = $course->groupmode;
-                        }
-
-                    } else {
-                        $mod->groupmode = false;
-                    }
-                    $editbuttons = '<div class="buttons">'.make_editing_buttons($mod, true, true).'</div>';
+                    $actions = course_get_cm_edit_actions($mod, -1);
+                    $editactions = $courserenderer->course_section_cm_edit_actions($actions);
+                    $editbuttons = html_writer::tag('div', $editactions, array('class' => 'buttons'));
                 } else {
                     $editbuttons = '';
                 }
@@ -202,12 +198,12 @@ class block_side_bar extends block_list {
                             continue;
                         }
                         $this->content->items[] = '<a title="'.$strmovefull.'" href="'.$CFG->wwwroot.'/course/mod.php'.
-                                                  '?moveto='.$mod->id.'&amp;sesskey='.sesskey().'"><img style="height'.
-                                                  ':16px; width:80px; border:0px" src="'.$OUTPUT->pix_url('movehere').
-                                                  '" alt="'.$strmovehere.'" /></a>';
+                            '?moveto='.$mod->id.'&amp;sesskey='.sesskey().'"><img style="height:16px; width:80px; border:0px"'.
+                            ' src="'.$OUTPUT->pix_url('movehere').'" alt="'.$strmovehere.'" /></a>';
                         $this->content->icons[] = '';
                     }
-                    list($content, $instancename) = get_print_section_cm_text($modinfo->cms[$modnumber], $course);
+                    $content = $mod->get_formatted_content(array('overflowdiv' => true, 'noclean' => true));
+                    $instancename = $mod->get_formatted_name();
                     $linkcss = $mod->visible ? '' : ' class="dimmed" ';
 
                     if (!($url = $mod->get_url())) {
@@ -231,14 +227,11 @@ class block_side_bar extends block_list {
             $this->content->icons[] = '';
         }
 
-        if (!empty($modnames)) {
-            $this->content->footer = print_section_add_menus($course, $this->config->section, $modnames, true, true, $this->config->section);
-            // Replace modchooser with dropdown
-            $this->content->footer = str_replace('hiddenifjs addresourcedropdown', 'visibleifjs addresourcedropdown', $this->content->footer);
-            $this->content->footer = str_replace('visibleifjs addresourcemodchooser', 'hiddenifjs addresourcemodchooser', $this->content->footer);
-        } else {
-            $this->content->footer = '';
-        }
+        $this->content->footer = $courserenderer->course_section_add_cm_control($course, $this->config->section,
+                null, array('inblock' => true));
+        // Replace modchooser with dropdown
+        $this->content->footer = str_replace('hiddenifjs addresourcedropdown', 'visibleifjs addresourcedropdown', $this->content->footer);
+        $this->content->footer = str_replace('visibleifjs addresourcemodchooser', 'hiddenifjs addresourcemodchooser', $this->content->footer);
 
         return $this->content;
     }

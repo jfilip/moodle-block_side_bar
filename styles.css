@@ -1,0 +1,7 @@
+.block_side_bar li { clear: both; }
+.block_side_bar li .column { width: 100%; }
+.block_side_bar li .buttons { float: right; margin-top: 3px;}
+.dir-rtl .block_side_bar li .buttons { float: left; }
+.block_side_bar li .buttons a img{ vertical-align: text-bottom; margin: 0 3px;}
+.block_side_bar .footer { margin-top: 1em; }
+.block_side_bar .section_add_menus noscript div { display: inline;}
