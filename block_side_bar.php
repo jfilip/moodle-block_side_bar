@@ -166,6 +166,8 @@ class block_side_bar extends block_list {
             $strmovefull = strip_tags(get_string('movefull', '', "'$USER->activitycopyname'"));
             $strcancel= get_string('cancel');
             $stractivityclipboard = $USER->activitycopyname;
+        } else {
+            $strmove = get_string('move');
         }
 
         // Casting $course->modinfo to string prevents one notice when the field is null
@@ -187,7 +189,15 @@ class block_side_bar extends block_list {
 
                 if (!$ismoving) {
                     $actions = course_get_cm_edit_actions($mod, -1);
-                    $editactions = $courserenderer->course_section_cm_edit_actions($actions);
+
+                    // Prepend list of actions with the 'move' action.
+                    $actions = array('move' => new action_menu_link_primary(
+                        new moodle_url('/course/mod.php', array('sesskey' => sesskey(), 'copy' => $mod->id)),
+                        new pix_icon('t/move', $strmove, 'moodle', array('class' => 'iconsmall', 'title' => '')),
+                        $strmove
+                    )) + $actions;
+
+                    $editactions = $courserenderer->course_section_cm_edit_actions($actions, $mod, array('donotenhance' => true));
                     $editbuttons = html_writer::tag('div', $editactions, array('class' => 'buttons'));
                 } else {
                     $editbuttons = '';
