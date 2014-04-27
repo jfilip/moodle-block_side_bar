@@ -36,7 +36,8 @@ class block_side_bar extends block_list {
     }
 
     /**
-     * Parent class version of this function simply returns NULL This should be implemented by the derived class to return the content object.
+     * Parent class version of this function simply returns NULL This should be implemented by the derived class to return the
+     * content object.
      *
      * @return object The content object
      */
@@ -114,7 +115,7 @@ class block_side_bar extends block_list {
             }
         }
 
-        // extra fast view mode
+        // Extra fast view mode.
         $modinfo = get_fast_modinfo($course);
         if (!$isediting) {
             if (!empty($modinfo->sections[$this->config->section])) {
@@ -132,7 +133,7 @@ class block_side_bar extends block_list {
                         $this->content->icons[] = '';
                     } else {
                         $linkcss = $cm->visible ? '' : ' class="dimmed" ';
-                        // Accessibility: incidental image - should be empty Alt text
+                        // Accessibility: incidental image - should be empty Alt text.
                         $icon = '<img src="'.$cm->get_icon_url().'" class="icon" alt="" />&nbsp;';
                         $this->content->items[] = '<a title="'.$cm->modplural.'" '.$linkcss.' '.$cm->extra.' href="'.
                                                   $url.'">'.$icon.$instancename.'</a>';
@@ -143,7 +144,7 @@ class block_side_bar extends block_list {
             return $this->content;
         }
 
-        // slow & hacky editing mode
+        // Slow & hacky editing mode.
         $ismoving = ismoving($course->id);
 
         if (!$cs = $DB->get_record('course_sections', array('section' => $this->config->section, 'course' => $course->id))) {
@@ -162,11 +163,11 @@ class block_side_bar extends block_list {
         if ($ismoving) {
             $strmovehere = get_string('movehere');
             $strmovefull = strip_tags(get_string('movefull', '', "'$USER->activitycopyname'"));
-            $strcancel= get_string('cancel');
+            $strcancel = get_string('cancel');
             $stractivityclipboard = $USER->activitycopyname;
         }
 
-        // Casting $course->modinfo to string prevents one notice when the field is null
+        // Casting $course->modinfo to string prevents one notice when the field is null.
         $editbuttons = '';
 
         if ($ismoving) {
@@ -214,7 +215,7 @@ class block_side_bar extends block_list {
                         $this->content->items[] = $content.$editbuttons;
                         $this->content->icons[] = '';
                     } else {
-                        // Accessibility: incidental image - should be empty Alt text
+                        // Accessibility: incidental image - should be empty Alt text.
                         $icon = '<img src="'.$mod->get_icon_url().'" class="icon" alt="" />&nbsp;';
                         $this->content->items[] = '<a title="'.$mod->modfullname.'" '.$linkcss.' '.$mod->extra.
                                                   ' href="'.$url.'">'.$icon.$instancename.'</a>'.$editbuttons;
@@ -232,10 +233,13 @@ class block_side_bar extends block_list {
         }
 
         if (!empty($modnames)) {
-            $this->content->footer = print_section_add_menus($course, $this->config->section, $modnames, true, true, $this->config->section);
-            // Replace modchooser with dropdown
-            $this->content->footer = str_replace('hiddenifjs addresourcedropdown', 'visibleifjs addresourcedropdown', $this->content->footer);
-            $this->content->footer = str_replace('visibleifjs addresourcemodchooser', 'hiddenifjs addresourcemodchooser', $this->content->footer);
+            $this->content->footer = print_section_add_menus($course, $this->config->section, $modnames, true, true,
+                    $this->config->section);
+            // Replace modchooser with dropdown.
+            $this->content->footer = str_replace('hiddenifjs addresourcedropdown', 'visibleifjs addresourcedropdown',
+                    $this->content->footer);
+            $this->content->footer = str_replace('visibleifjs addresourcemodchooser', 'hiddenifjs addresourcemodchooser',
+                    $this->content->footer);
         } else {
             $this->content->footer = '';
         }
@@ -270,20 +274,20 @@ class block_side_bar extends block_list {
 
         if ($mods = $DB->get_records_sql($sql, $params)) {
             foreach ($mods as $mod) {
-                $mod_lib = $CFG->dirroot.'/mod/'.$mod->modname.'/lib.php';
-                if (file_exists($mod_lib)) {
-                    require_once($mod_lib);
+                $modlib = $CFG->dirroot.'/mod/'.$mod->modname.'/lib.php';
+                if (file_exists($modlib)) {
+                    require_once($modlib);
 
-                    $delete_func = $mod->modname.'_delete_instance';
+                    $deletefunc = $mod->modname.'_delete_instance';
 
-                    if (function_exists($delete_func)) {
-                        $delete_func($mod->instance);
+                    if (function_exists($deletefunc)) {
+                        $deletefunc($mod->instance);
                     }
                 }
             }
         }
 
-        // Delete the course section for this block instance
+        // Delete the course section for this block instance.
         $DB->delete_records('course_sections_availability', array('coursesectionid' => $this->config->section_id));
         $DB->delete_records('course_sections_avail_fields', array('coursesectionid' => $this->config->section_id));
         $DB->delete_records('course_sections', array('id' => $this->config->section_id));
@@ -311,7 +315,9 @@ class block_side_bar extends block_list {
     }
 
     /**
-     * Are you going to allow multiple instances of each block? If yes, then it is assumed that the block WILL USE per-instance configuration.
+     * Are you going to allow multiple instances of each block? If yes, then it is assumed that the block WILL USE per-instance
+     * configuration.
+     *
      * @return bool
      */
     public function instance_allow_multiple() {
@@ -343,7 +349,7 @@ class block_side_bar extends block_list {
      * @return bool Status indicator
      */
     public function after_restore() {
-        // Get the correct course_sections record ID for the new course
+        // Get the correct course_sections record ID for the new course.
         $section = $DB->get_record('course_sections', 'course', $this->instance->pageid, 'section', $this->config->section);
 
         if (!empty($section->id)) {

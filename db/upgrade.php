@@ -33,7 +33,7 @@ function xmldb_block_side_bar_upgrade($oldversion = 0) {
     if ($oldversion < 2012062500) {
         require_once($CFG->dirroot.'/blocks/side_bar/locallib.php');
 
-        // Fetch all block instances which have saved configuration data
+        // Fetch all block instances which have saved configuration data.
         $select = "blockname = 'side_bar' AND ".$DB->sql_isnotempty('block_instances', 'configdata', true, true);
         if ($bis = $DB->get_recordset_select('block_instances', $select, array(), 'id, configdata')) {
             // Perform a semi-cache of course records so we're not constantly fetching course records from the DB when multiple
@@ -65,7 +65,8 @@ function xmldb_block_side_bar_upgrade($oldversion = 0) {
                     $course = $courses[$section->course];
                 }
 
-                // We've changed some of the values for text within a section and the migration code depends on this so we need to update now
+                // We've changed some of the values for text within a section and the migration code depends on this so we need
+                // to update now.
                 $reseturl = new moodle_url('/blocks/side_bar/reset.php?cid='.$course->id);
 
                 $supdate = new stdClass();
@@ -79,7 +80,7 @@ function xmldb_block_side_bar_upgrade($oldversion = 0) {
                 if ($sectioninfo == null) {
                     $result = false;
                 } else {
-                    // Store the new section number and update the block configuration data
+                    // Store the new section number and update the block configuration data.
                     $blockcfg->section = $sectioninfo->section;
                     $DB->set_field('block_instances', 'configdata', base64_encode(serialize($blockcfg)), array('id' => $bi->id));
                 }
