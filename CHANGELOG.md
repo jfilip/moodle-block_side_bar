@@ -5,6 +5,10 @@ IMPROVEMENTS:
 * updated README.md file to contain current information [[CONTRIB-5014](https://tracker.moodle.org/browse/CONTRIB-5014)]
 * added CHANGELOG.md file to document changes for each release [[CONTRIB-5014](https://tracker.moodle.org/browse/CONTRIB-5014)]
 
+DEVELOPER:
+
+* cleaned up coding style complaints foundby running the [Moodle Code-checker plugin](https://moodle.org/plugins/view.php?plugin=local_codechecker) [[CONTRIB-5003](https://tracker.moodle.org/browse/CONTRIB-5003)]
+
 ## 2.5.0 (April 16, 2014)
 
 NEW FEATURES:
