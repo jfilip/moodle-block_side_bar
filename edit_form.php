@@ -28,7 +28,7 @@ defined('MOODLE_INTERNAL') || die();
 
 class block_side_bar_edit_form extends block_edit_form {
     protected function specific_definition($mform) {
-        // Field for editing Side Bar block title
+        // Field for editing Side Bar block title.
         $mform->addElement('header', 'configheader', get_string('blocksettings', 'block'));
 
         $mform->addElement('text', 'config_title', get_string('configtitle', 'block_side_bar'));
