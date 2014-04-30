@@ -1,3 +1,9 @@
+## 2.5.2 (April 30, 2014)
+
+IMPROVEMENTS:
+
+* added correct release version property in version.php
+
 ## 2.5.1 (April 28, 2014)
 
 IMPROVEMENTS:
