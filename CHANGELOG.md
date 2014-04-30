@@ -1,3 +1,9 @@
+## 2.4.2 (April 30, 2014)
+
+IMPROVEMENTS:
+
+* fixed incorrect Moodle required version and added correct release version property in version.php
+
 ## 2.4.1 (April 28, 2014)
 
 IMPROVEMENTS:
