@@ -1,4 +1,4 @@
-## 2.5.3 (unreleased)
+## 2.5.3 (May 26, 2014)
 
 IMPROVEMENTS:
 
