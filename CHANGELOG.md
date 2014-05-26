@@ -1,4 +1,4 @@
-## 2.7.1 (unreleased)
+## 2.7.1 (May 26, 2014)
 
 IMPROVEMENTS:
 
