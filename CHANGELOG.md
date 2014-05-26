@@ -1,3 +1,11 @@
+## 2.7.1 (unreleased)
+
+IMPROVEMENTS:
+
+* removed deprecated calls to cm_info::get_url()
+* changed to remove title case from the block name, per Moodle convention
+* added missing 'addinstance' string
+
 ## 2.7.0 (May 14, 2014)
 
 NEW FEATURES:
