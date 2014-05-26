@@ -1,3 +1,10 @@
+## 2.5.3 (unreleased)
+
+IMPROVEMENTS:
+
+* changed to remove title case from the block name, per Moodle convention
+* added missing 'addinstance' string
+
 ## 2.5.2 (April 30, 2014)
 
 IMPROVEMENTS:
