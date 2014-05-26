@@ -1,4 +1,4 @@
-## 2.6.3 (unreleased)
+## 2.6.3 (June 26, 2014)
 
 IMPROVEMENTS:
 

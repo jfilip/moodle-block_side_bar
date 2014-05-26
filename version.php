@@ -26,8 +26,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2013111803;
+$plugin->version   = 2013111804;
 $plugin->requires  = 2013111800;
-$plugin->release   = '2.6.2';
+$plugin->release   = '2.6.3';
 $plugin->component = 'block_side_bar';
 $plugin->maturity  = MATURITY_STABLE;
