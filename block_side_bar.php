@@ -287,8 +287,6 @@ class block_side_bar extends block_list {
         }
 
         // Delete the course section for this block instance
-        $DB->delete_records('course_sections_availability', array('coursesectionid' => $this->config->section_id));
-        $DB->delete_records('course_sections_avail_fields', array('coursesectionid' => $this->config->section_id));
         $DB->delete_records('course_sections', array('id' => $this->config->section_id));
         rebuild_course_cache($this->page->course->id, true);
     }

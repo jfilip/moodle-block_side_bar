@@ -1259,4 +1259,40 @@ class blockSideBarTestcase extends advanced_testcase {
         $this->assertNotEquals(false, get_coursemodule_from_instance('page', $page2->id, $course->id, 11));
         $this->assertNotEquals(false, get_coursemodule_from_instance('page', $page3->id, $course->id, 12));
     }
+
+    public function test_instance_delete_does_not_raise_errors() {
+        global $DB;
+
+        $this->resetAfterTest();
+        $dg = $this->getDataGenerator();
+
+        // Create test course data
+        $course = $dg->create_course(array('format' => 'topics', 'numsections' => 1));
+        $dg->create_course_section(array('course' => $course->id, 'section' => 1));
+        $this->create_sidebar_course_section($course->id, 2);
+
+        $page = new moodle_page();
+        $page->set_context(context_course::instance($course->id));
+        $page->set_pagetype('course-view');
+        $blockmanager = new testable_block_manager($page);
+        $blockmanager->add_region('side-pre', false);
+        $blockmanager->add_block('side_bar', 'side-pre', 0, false);
+
+        $blocks = $DB->get_records('block_instances', array('blockname' => 'side_bar'), 'id DESC', '*', 0, 1);
+        $instance = array_pop($blocks);
+
+        $params = array('course' => $course->id, 'section' => 2);
+        $sbsection = $DB->get_record('course_sections', $params, 'id, section, name, summary, visible');
+
+        $sbblock = block_instance('side_bar', $instance, $page);
+        $sbblock->config = new stdClass();
+        $sbblock->config->section    = $sbsection->section;
+        $sbblock->config->section_id = $sbsection->id;
+
+        try {
+            $sbblock->instance_delete();
+        } catch(Exception $e) {
+            $this->fail('Excepetion: '.$e->getMessage());
+        }
+    }
 }
